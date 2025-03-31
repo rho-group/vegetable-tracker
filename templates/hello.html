@@ -7,13 +7,13 @@
 <html>
    <body>
      <main>
-        <div class="px-4 py-3 my-2 text-center">
-            <img class="d-block mx-auto mb-4" src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables"  height="292"/>
-            <h1 class="display-6 fw-bold text-primary">Well done!</h1>
-            <p class="fs-5">
+        <div>
+            <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables"  height="292"/>
+            <h1>Well done!</h1>
+            <p>
                 You ate {{name}}
             </p>
-            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg px-4 gap-3">Back home</a>
+            <a href="{{ url_for('index') }}">Back home</a>
           </div>
      </main>      
    </body>
