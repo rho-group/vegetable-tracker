@@ -7,19 +7,17 @@
 <html>
    <body>
      <main>
-        <div class="px-4 py-3 my-2 text-center">
-            <img class="d-block mx-auto mb-4" src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
-            <h1 class="display-6 fw-bold text-primary">Track your vegetables</h1>            
+        <div>
+            <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
+            <h1>Track your vegetables</h1>            
           </div>
         <form method="post" action="{{url_for('hello')}}">
-            <div class="col-md-6 mx-auto text-center">
-                <!--label for="name" class="form-label fw-bold fs-5">What vegetable did you eat?</label-->
-
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center align-items-center my-1">
-                    <input type="text" class="form-control" id="name" name="name" placeholder= "Vegetable" style="max-width: 256px;">
+            <div>
+                <div>
+                    <input type="text" id="name" name="name" placeholder= "Vegetable" style="max-width: 256px;">
                   </div>            
-                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center my-2">
-                  <button type="submit" class="btn btn-primary btn-lg px-4 gap-3">Eat it</button>
+                <div>
+                  <button type="submit">Eat it</button>
                 </div>            
             </div>
         </form>
