@@ -3,9 +3,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const suggestionsList = document.getElementById("suggestions");
     const selectedList = document.getElementById("selected-list");
     const alreadyEatenList = document.getElementById("already-eaten-list")
+    const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
 
     let selectedItems = []; // Väliaikainen lista
+
+    function refreshChart() {
+        barChartImg.src = "/get_bar_chart?" + new Date().getTime(); // Prevent caching
+    }
+
+    function showEatenList() {
+        fetch('/get_items')
+        .then(response => response.json())
+        .then(data => {
+            console.log("Server response:", data);
+            alreadyEatenList.innerHTML = "";
+            
+            for (let item in data) {
+                let li = document.createElement("li");
+                li.innerHTML = data[item];
+
+                alreadyEatenList.appendChild(li);
+            }
+    })};
+
+    showEatenList()
 
     // Ehdotusten haku, kun käyttäjä kirjoittaa
     inputField.addEventListener("input", function () {
@@ -75,7 +97,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 alreadyEatenList.appendChild(li);
             }
-
+        
+            barChartImg.src = "/get_bar_chart?" + new Date().getTime();
         })
         .catch(error => console.error("Error sending data:", error));
     });
