@@ -8,7 +8,6 @@ from psycopg2.extras import RealDictCursor
 app = Flask(__name__)
 
 # DB connection in the Azure Database
-'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -16,8 +15,9 @@ db_params = {
     'database': os.getenv('DB_NAME'),
     'port':'5432'
 }
-'''
+
 # DB connection locally for testing
+'''
 db_params = {
     'host': "ADD",
     'user': "ADD",
@@ -25,7 +25,7 @@ db_params = {
     'database': "nutritions",
     'port':'5432'
 }
-
+'''
 def create_connection(db_params):
     try:
         # Connect to PostgreSQL database
@@ -43,7 +43,6 @@ def create_connection(db_params):
 
 # get this from db
 #vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
-
 
 # Server-side list that stores selected items
 selected_items = []
