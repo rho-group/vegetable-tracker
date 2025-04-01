@@ -1,10 +1,18 @@
 from flask import Flask, render_template, request, jsonify, Response
 import matplotlib.pyplot as plt
 import io
+import os
 
 app = Flask(__name__)
 
 # DB connection
+db_params = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+}
+
 
 # get this from db
 vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
