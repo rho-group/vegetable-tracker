@@ -1,26 +1,24 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Versatile vegetables</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegetable Selector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<html>
-   <body>
-     <main>
-        <div>
-            <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
-            <h1>Track your vegetables</h1>            
-          </div>
-        <form method="post" action="{{url_for('hello')}}">
-            <div>
-                <div>
-                    <input type="text" id="name" name="name" placeholder= "Vegetable" style="max-width: 256px;">
-                  </div>            
-                <div>
-                  <button type="submit">Eat it</button>
-                </div>            
-            </div>
-        </form>
-     </main>      
-   </body>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
+
+        <h2>Select Vegetable</h2>
+        <input type="text" id="inputField" placeholder="Type a vegetable...">
+        
+        <h3>Your Selected Vegetables:</h3>
+        <ul id="selected-list" class="selected-list"></ul>
+        <ul id="suggestions"></ul>
+
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
 </html>

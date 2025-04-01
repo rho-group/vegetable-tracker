@@ -1,32 +1,43 @@
-import os
-
-from flask import (Flask, redirect, render_template, request,
-                   send_from_directory, url_for)
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# DB connection
+
+# get this from db
+vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
+
+# Server-side list that stores selected items
+selected_items = []
 
 @app.route('/')
 def index():
-   print('Request for index page received')
-   return render_template('index.html')
+    return render_template('index.html')
 
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+# This route returns suggestions based on user input
+@app.route('/suggest')
+def suggest():
+    query = request.args.get('q', '')
+    suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
+    return jsonify(suggestions)
 
-@app.route('/hello', methods=['POST'])
-def hello():
-   name = request.form.get('name')
+# This route is for adding an item to the list
+@app.route('/add_item', methods=['POST'])
+def add_item():
+    item = request.json.get('item')
+    if item and item not in selected_items:
+        selected_items.append(item)  # Add to the server-side list
+    print(f'ITEM ADDED, selected list: {selected_items}')
+    return jsonify({'success': True, 'selected_items': selected_items})
 
-   if name:
-       print('Request for hello page received with name=%s' % name)
-       return render_template('hello.html', name = name)
-   else:
-       print('Request for hello page received with no name or blank name -- redirecting')
-       return redirect(url_for('index'))
-
+# This route is for removing an item from the list
+@app.route('/remove_item', methods=['DELETE'])
+def remove_item():
+    item = request.json.get('item')
+    if item in selected_items:
+        selected_items.remove(item)  # Remove from the server-side list
+    print(f'ITEM DELETED, selected list: {selected_items}')
+    return jsonify({'success': True, 'selected_items': selected_items})
 
 if __name__ == '__main__':
-   app.run()
+    app.run(debug=True)
