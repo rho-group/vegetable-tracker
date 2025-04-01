@@ -19,10 +19,8 @@ ul {
     list-style-type: none; 
     padding: 0; 
     margin: 5px 0 0 0; 
-    border: 1px solid #ccc; 
     max-width: 300px; 
     background: white; 
-    position: absolute; 
 }
 
 ul li { 

@@ -10,12 +10,16 @@
     <div class="container">
         <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
 
-        <h2>Select Vegetable</h2>
+        <h2>Select Vegetables to Eat</h2>
         <input type="text" id="inputField" placeholder="Type a vegetable...">
         
-        <h3>Your Selected Vegetables:</h3>
+        <ul id="suggestions" class="suggestion-list"></ul>
+        <button id="eat-me-button">EAT</button>
+        
         <ul id="selected-list" class="selected-list"></ul>
-        <ul id="suggestions"></ul>
+        
+        <h3>You have eaten this week:</h3>
+        <ul id="already-eaten-list" class="selected-list"></ul>
 
     </div>
 
