@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.13'
 
       - name: Create and start virtual environment
         run: |
@@ -68,4 +68,4 @@ jobs:
         with:
           app-name: 'vegetable-tracker'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_CD1E145BCB804BE3B6C6309104981C83 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A6B70D1925FC4CBA834BE6511519ECBF }}
