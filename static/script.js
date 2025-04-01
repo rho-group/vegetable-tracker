@@ -2,8 +2,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const inputField = document.getElementById("inputField");
     const suggestionsList = document.getElementById("suggestions");
     const selectedList = document.getElementById("selected-list");
+    const alreadyEatenList = document.getElementById("already-eaten-list")
+    const sendButton = document.getElementById("eat-me-button");
 
-    // Fetch suggestions when user types
+    let selectedItems = []; // Väliaikainen lista
+
+    // Ehdotusten haku, kun käyttäjä kirjoittaa
     inputField.addEventListener("input", function () {
         let query = this.value.trim();
 
@@ -15,57 +19,64 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch(`/suggest?q=${query}`)
             .then(response => response.json())
             .then(data => {
-                suggestionsList.innerHTML = ""; // Clear previous suggestions
+                suggestionsList.innerHTML = "";
                 data.forEach(item => {
                     let li = document.createElement("li");
                     li.textContent = item;
-
-                    // Add item to the selected list and update Python list
                     li.onclick = function () {
                         addToList(item);
                         inputField.value = "";
-                        suggestionsList.innerHTML = ""; // Clear suggestions after selection
+                        suggestionsList.innerHTML = "";
                     };
-
                     suggestionsList.appendChild(li);
                 });
             })
             .catch(error => console.error("Error fetching suggestions:", error));
     });
 
-    // Function to add item to the selected list
+    // Lisää valittu ruoka väliaikaiseen listaan
     function addToList(item) {
-        let li = document.createElement("li");
-        li.textContent = item;
+        if (!selectedItems.includes(item)) { // Estää duplikaatit
+            selectedItems.push(item);
 
-        // Remove item from selected list and update Python list
-        li.onclick = function () {
-            removeFromList(item, li);
-        };
+            let li = document.createElement("li");
+            li.textContent = item;
+            li.onclick = function () {
+                removeFromList(item, li);
+            };
+            selectedList.appendChild(li);
+        }
+    }
 
-        selectedList.appendChild(li);
+    // Poista ruoka väliaikaisesta listasta
+    function removeFromList(item, li) {
+        selectedItems = selectedItems.filter(i => i !== item);
+        selectedList.removeChild(li);
+    }
 
-        // Update the Python list by sending a POST request
-        fetch('/add_item', {
+    // Lähetä lista Pythonille
+    sendButton.addEventListener("click", function () {
+        fetch('/save_items', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ item: item })
-        });
-    }
+            body: JSON.stringify({ items: selectedItems })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Server response:", data);
+            selectedItems = []; // Tyhjennetään lista lähetysten jälkeen
+            selectedList.innerHTML = ""; // Tyhjennetään UI
+            alreadyEatenList.innerHTML = "";
+            for (let item in data.selected_items) {
+                let li = document.createElement("li");
+                li.innerHTML = data.selected_items[item];
 
-    // Function to remove item from selected list and Python list
-    function removeFromList(item, li) {
-        selectedList.removeChild(li);
+                alreadyEatenList.appendChild(li);
+            }
 
-        // Update the Python list by sending a DELETE request
-        fetch('/remove_item', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ item: item })
-        });
-    }
+        })
+        .catch(error => console.error("Error sending data:", error));
+    });
 });

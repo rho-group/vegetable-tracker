@@ -39,5 +39,15 @@ def remove_item():
     print(f'ITEM DELETED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
 
+# Save selected vegetables to backend
+@app.route('/save_items', methods=['POST'])
+def save_items():
+    items = request.json.get('items')
+    for item in items:
+        if item not in selected_items:
+            selected_items.append(item)
+    print(f'ITEMS ADDED, selected list: {selected_items}')
+    return jsonify({'success': True, 'selected_items': selected_items})
+
 if __name__ == '__main__':
     app.run(debug=True)
