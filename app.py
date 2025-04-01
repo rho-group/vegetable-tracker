@@ -7,12 +7,22 @@ from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
-# DB connection
+# DB connection in the Azure Database
+'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
     'database': os.getenv('DB_NAME'),
+    'port':'5432'
+}
+'''
+# DB connection locally for testing
+db_params = {
+    'host': "ADD",
+    'user': "ADD",
+    'password': "ADD",
+    'database': "nutritions",
     'port':'5432'
 }
 
@@ -32,7 +42,8 @@ def create_connection(db_params):
         return None
 
 # get this from db
-vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
+#vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
+
 
 # Server-side list that stores selected items
 selected_items = []
@@ -43,8 +54,18 @@ def index():
     connection = create_connection(db_params)
     if connection is None:
         return jsonify({"message": "Error connecting to database."}), 500
-    else:
-        return render_template('index.html')
+    
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT foodname FROM vegetables;")
+    rows = cursor.fetchall()
+
+    global vegetable_list
+    vegetable_list = [row[0] for row in rows]
+
+    cursor.close()
+    connection.close()
+    return render_template('index.html')
 
 
 # This route returns suggestions based on user input
