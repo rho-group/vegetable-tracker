@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, Response
 import matplotlib.pyplot as plt
 import io
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
@@ -10,9 +12,24 @@ db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
     'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME')
+    'database': os.getenv('DB_NAME'),
+    'port':'5432'
 }
-#fdsfdfdsfdsfsfdsf
+
+def create_connection(db_params):
+    try:
+        # Connect to PostgreSQL database
+        connection = psycopg2.connect(
+            dbname=db_params['database'],
+            user=db_params['user'],
+            password=db_params['password'],
+            host=db_params['host'],
+            port=db_params['port']
+        )
+        return connection
+    except Exception as error:
+        print(error)
+        return None
 
 # get this from db
 vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
@@ -23,7 +40,12 @@ TARGET_VALUE = 30
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    connection = create_connection(db_params)
+    if connection is None:
+        return jsonify({"message": "Error connecting to database."}), 500
+    else:
+        return render_template('index.html')
+
 
 # This route returns suggestions based on user input
 @app.route('/suggest')
