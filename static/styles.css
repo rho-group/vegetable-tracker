@@ -1,0 +1,39 @@
+body { 
+    font-family: Arial, sans-serif; 
+    text-align: center; 
+    margin-top: 50px; 
+}
+
+.container { 
+    display: inline-block; 
+    text-align: left; 
+}
+
+input { 
+    width: 300px; 
+    padding: 8px; 
+    font-size: 16px; 
+}
+
+ul { 
+    list-style-type: none; 
+    padding: 0; 
+    margin: 5px 0 0 0; 
+    border: 1px solid #ccc; 
+    max-width: 300px; 
+    background: white; 
+    position: absolute; 
+}
+
+ul li { 
+    padding: 8px; 
+    cursor: pointer; 
+}
+
+ul li:hover { 
+    background: #f0f0f0; 
+}
+
+.selected-list { 
+    margin-top: 20px; 
+}
