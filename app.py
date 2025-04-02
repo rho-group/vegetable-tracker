@@ -6,6 +6,7 @@ import psycopg2
 import datetime
 import uuid
 import matplotlib
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 matplotlib.use('agg')
 
@@ -15,6 +16,8 @@ selected_items = []
 TARGET_VALUE = 30
 
 app = Flask(__name__)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # DB connection in the Azure Database
 
@@ -111,7 +114,7 @@ def get_cookie():
 
         # set cookie
         resp = make_response(f'New user created: {new_username}')
-        resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=False, samesite='Lax', httponly=True)
+        resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=False, samesite=None, httponly=True)
         print(new_username)
         return resp
     
