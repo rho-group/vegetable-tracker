@@ -5,6 +5,10 @@ import os
 import psycopg2
 import datetime
 import uuid
+import matplotlib
+
+matplotlib.use('agg')
+
 
 USER_ID = 1
 selected_items = []
@@ -25,8 +29,8 @@ db_params = {
 # DB connection locally for testing
 
 db_params = {
-    'host': "ADD",
-    'user': "ADD",
+    'host': "vegetable-tracker-db.postgres.database.azure.com",
+    'user': "rhoAdmin",
     'password': "ADD",
     'database': "nutritions",
     'port':'5432'
@@ -72,7 +76,7 @@ vegetable_list = [row[0].capitalize() for row in rows]
 
 # Get eaten history data from database for current user
 def get_eaten_history_data(id):
-    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {USER_ID};")
+    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {id};")
     veg_ids = cursor.fetchall()
     
     for item in veg_ids:
@@ -107,7 +111,7 @@ def get_cookie():
 
         # set cookie
         resp = make_response(f'New user created: {new_username}')
-        resp.set_cookie('username', new_username, max_age=60*60*24*30)
+        resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=True, samesite='Lax')
         print(new_username)
         return resp
     
