@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fetch('/get_items')
         .then(response => response.json())
         .then(data => {
-            console.log("Server response:", data);
+            console.log("Server response for get items function:", data);
             alreadyEatenList.innerHTML = "";
             
             for (let item in data) {
@@ -26,11 +26,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 alreadyEatenList.appendChild(li);
             }
     })};
-    console.log('Before showEatenList() -function call')
-    console.log(selectedItems)
+
     showEatenList()
-    console.log('After showEatenList() -function call')
-    console.log(selectedItems)
 
     // Ehdotusten haku, kun käyttäjä kirjoittaa
     inputField.addEventListener("input", function () {
@@ -104,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 alreadyEatenList.appendChild(li);
             }
         
-            barChartImg.src = "/get_bar_chart?" + new Date().getTime();
+            refreshChart();
         })
         .catch(error => console.error("Error sending data:", error));
     });
