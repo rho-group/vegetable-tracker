@@ -3,14 +3,13 @@ import matplotlib.pyplot as plt
 import io
 import os
 import psycopg2
-from psycopg2.extras import RealDictCursor
 import datetime
 import uuid
 
 app = Flask(__name__)
 
 # DB connection in the Azure Database
-''''
+
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -18,9 +17,8 @@ db_params = {
     'database': os.getenv('DB_NAME'),
     'port':'5432'
 }
-
-# DB connection locally for testing
 '''
+# DB connection locally for testing
 
 db_params = {
     'host': "ADD",
@@ -29,7 +27,7 @@ db_params = {
     'database': "nutritions",
     'port':'5432'
 }
-
+'''
 def create_connection(db_params):
     try:
         # Connect to PostgreSQL database
@@ -58,31 +56,29 @@ def add_user_to_db(username):
         finally:
             connection.close()
 
+connection = create_connection(db_params)
+cursor = connection.cursor()
+
+cursor.execute("SELECT foodname FROM vegetables;")
+rows = cursor.fetchall()
+vegetable_list = [row[0].capitalize() for row in rows]
+
 # get this from db
 #vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
-
-# Server-side list that stores selected items
 selected_items = []
+# Server-side list that stores selected items
+#Select all eaten items for the static user.
+cursor.execute("SELECT distinct veg_id FROM eaten WHERE user_id = 1;")
+veg_ids = cursor.fetchall()
+for item in veg_ids:
+    selected_items.append(vegetable_list[item[0]-1])
+
 TARGET_VALUE = 30
 
 @app.route('/')
 def index():
     get_cookie()
-    global connection
-    connection = create_connection(db_params)
-    if connection is None:
-        return jsonify({"message": "Error connecting to database."}), 500
-    global cursor
-    cursor = connection.cursor()
 
-    cursor.execute("SELECT foodname FROM vegetables;")
-    rows = cursor.fetchall()
-
-    global vegetable_list
-    vegetable_list = [row[0].capitalize() for row in rows]
-
-    #cursor.close()
-    #connection.close()
     return render_template('index.html')
 
 #@app.route('/set_cookie')
@@ -151,9 +147,9 @@ def save_items():
     for item in items:
         #if item in selected_items:
         #    selected_items.remove(item)
-        selected_items.append((item,(vegetable_list.index(item)+1), current_timestamp))
-#        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",(1,(vegetable_list.index(item)+1),current_timestamp))
-
+        selected_items.append(item)
+        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",(1,(vegetable_list.index(item)+1),current_timestamp))
+        connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
 
