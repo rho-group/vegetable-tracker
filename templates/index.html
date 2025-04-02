@@ -8,16 +8,16 @@
 </head>
 <body>
     <div class="container">
-        <img src="{{ url_for('static', filename='images/vegetables.jpg') }}" alt="Different vegetables" height="292"/>
+        <img src="{{ url_for('static', filename='images/RHO3.svg') }}" alt="Different vegetables" height="292"/>
 
         <h2>Select Vegetables to Eat</h2>
         <input type="text" id="inputField" placeholder="Type a vegetable...">
         
         <ul id="suggestions" class="suggestion-list"></ul>
-        <button id="eat-me-button" class="button-3">EAT</button>
+        
 
         <ul id="selected-list" class="selected-list"></ul>
-        
+        <button id="eat-me-button" class="button-3">EAT</button>
         <h3>Your progress:</h3>
         <img id="barChart" src="/get_bar_chart" alt="Bar Chart">
         <ul id="already-eaten-list" class="selected-list"></ul>

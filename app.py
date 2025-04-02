@@ -4,10 +4,12 @@ import io
 import os
 import psycopg2
 import datetime
+import uuid
 
 app = Flask(__name__)
 
 # DB connection in the Azure Database
+
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -40,6 +42,19 @@ def create_connection(db_params):
     except Exception as error:
         print(error)
         return None
+    
+def add_user_to_db(username):
+    """ Add new user if not exists """
+    connection = create_connection(db_params)
+    if connection:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("INSERT INTO users (username) VALUES (%s) RETURNING id;", (username,))
+                connection.commit()
+        except Exception as error:
+            print("Error inserting user:", error)
+        finally:
+            connection.close()
 
 connection = create_connection(db_params)
 cursor = connection.cursor()
@@ -62,20 +77,40 @@ TARGET_VALUE = 30
 
 @app.route('/')
 def index():
+    get_cookie()
+
     return render_template('index.html')
 
-@app.route('/set_cookie')
+#@app.route('/set_cookie')
 def set_cookie():
-    resp = make_response("Cookie has been set!")
-    resp.set_cookie('username','flask_user', max_age=60*60*24*30)#Cookie valid for 30 days return resp
+    """ Create new user set cookie. """
+    new_username = uuid.uuid4().hex[:32]
+    add_user_to_db(new_username)
 
-@app.route('/get_cookie')
+    resp = make_response("Cookie has been set!")
+    resp.set_cookie('username', new_username, max_age=60*60*24*30)#Cookie valid for 30 days return resp
+    return resp
+
+#@app.route('/get_cookie')
 def get_cookie():
-    global username
-    username = request.cookies.get('username')
+    """ check if user exists and adds if not """
+    username = request.cookies.get('username')  # get cookie
     if username:
-        return f'Welcome back, {username}!'
-    return 'No cookie found!'
+        print(username)
+    if not username:
+        # generate new username
+        new_username = uuid.uuid4().hex[:32]
+
+        # save to db
+        add_user_to_db(new_username)
+
+        # set cookie
+        resp = make_response(f'New user created: {new_username}')
+        resp.set_cookie('username', new_username, max_age=60*60*24*30)
+        print(new_username)
+        return resp
+
+    return f'Welcome back, {username}!'
 
 # This route returns suggestions based on user input
 @app.route('/suggest')
