@@ -6,6 +6,10 @@ import psycopg2
 import datetime
 import uuid
 
+USER_ID = 1
+selected_items = []
+TARGET_VALUE = 30
+
 app = Flask(__name__)
 
 # DB connection in the Azure Database
@@ -28,6 +32,7 @@ db_params = {
     'port':'5432'
 }
 '''
+# Connect to database
 def create_connection(db_params):
     try:
         # Connect to PostgreSQL database
@@ -42,7 +47,8 @@ def create_connection(db_params):
     except Exception as error:
         print(error)
         return None
-    
+
+# Add new user to the database based on the cookies    
 def add_user_to_db(username):
     """ Add new user if not exists """
     connection = create_connection(db_params)
@@ -59,44 +65,39 @@ def add_user_to_db(username):
 connection = create_connection(db_params)
 cursor = connection.cursor()
 
+# Get all vegetables available from the database
 cursor.execute("SELECT foodname FROM vegetables;")
 rows = cursor.fetchall()
 vegetable_list = [row[0].capitalize() for row in rows]
 
-# get this from db
-#vegetable_list = ['Carrot', 'Potato', 'Tomato', 'Cucumber', 'Spinach', 'Broccoli', 'Onion']
-selected_items = []
-# Server-side list that stores selected items
-#Select all eaten items for the static user.
-cursor.execute("SELECT distinct veg_id FROM eaten WHERE user_id = 1;")
-veg_ids = cursor.fetchall()
-for item in veg_ids:
-    selected_items.append(vegetable_list[item[0]-1])
+# Get eaten history data from database for current user
+def get_eaten_history_data(id):
+    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {USER_ID};")
+    veg_ids = cursor.fetchall()
+    
+    for item in veg_ids:
+        selected_items.append(vegetable_list[item[0]-1])
 
-TARGET_VALUE = 30
+# Fetch user id from database based on the uuid username from cookies
+def get_user_id_from_db(username):
+    cursor.execute(f"SELECT id FROM users WHERE username = '{username}';")
+    row = cursor.fetchone()
 
-@app.route('/')
-def index():
-    get_cookie()
+    if row is None:
+        print('User not found')
+        return None
+    
+    global USER_ID
+    USER_ID = int(row[0])
 
-    return render_template('index.html')
+    get_eaten_history_data(USER_ID)
 
-#@app.route('/set_cookie')
-def set_cookie():
-    """ Create new user set cookie. """
-    new_username = uuid.uuid4().hex[:32]
-    add_user_to_db(new_username)
-
-    resp = make_response("Cookie has been set!")
-    resp.set_cookie('username', new_username, max_age=60*60*24*30)#Cookie valid for 30 days return resp
-    return resp
-
-#@app.route('/get_cookie')
 def get_cookie():
     """ check if user exists and adds if not """
     username = request.cookies.get('username')  # get cookie
     if username:
         print(username)
+        return f'Welcome back, {username}!'
     if not username:
         # generate new username
         new_username = uuid.uuid4().hex[:32]
@@ -109,8 +110,14 @@ def get_cookie():
         resp.set_cookie('username', new_username, max_age=60*60*24*30)
         print(new_username)
         return resp
+    
 
-    return f'Welcome back, {username}!'
+
+@app.route('/')
+def index():
+    get_cookie()
+    get_user_id_from_db(request.cookies.get('username'))
+    return render_template('index.html')
 
 # This route returns suggestions based on user input
 @app.route('/suggest')
@@ -118,15 +125,6 @@ def suggest():
     query = request.args.get('q', '')
     suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
     return jsonify(suggestions)
-
-# This route is for adding an item to the list
-@app.route('/add_item', methods=['POST'])
-def add_item():
-    item = request.json.get('item')
-    if item and item not in selected_items:
-        selected_items.append(item)  # Add to the server-side list
-    print(f'ITEM ADDED, selected list: {selected_items}')
-    return jsonify({'success': True, 'selected_items': selected_items})
 
 # This route is for removing an item from the list
 @app.route('/remove_item', methods=['DELETE'])
@@ -148,7 +146,7 @@ def save_items():
         #if item in selected_items:
         #    selected_items.remove(item)
         selected_items.append(item)
-        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",(1,(vegetable_list.index(item)+1),current_timestamp))
+        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",(USER_ID,(vegetable_list.index(item)+1),current_timestamp))
         connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
@@ -178,6 +176,7 @@ def get_bar_chart():
     img.seek(0)
 
     return Response(img.getvalue(), mimetype='image/png')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
