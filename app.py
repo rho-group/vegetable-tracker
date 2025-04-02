@@ -8,7 +8,6 @@ import datetime
 app = Flask(__name__)
 
 # DB connection in the Azure Database
-'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -20,12 +19,13 @@ db_params = {
 # DB connection locally for testing
 
 db_params = {
-    'host': "vegetable-tracker-db.postgres.database.azure.com",
-    'user': "rhoAdmin",
-    'password': "Salasana123",
+    'host': "ADD",
+    'user': "ADD",
+    'password': "ADD",
     'database': "nutritions",
     'port':'5432'
 }
+'''
 def create_connection(db_params):
     try:
         # Connect to PostgreSQL database
