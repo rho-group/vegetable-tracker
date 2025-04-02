@@ -26,8 +26,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 alreadyEatenList.appendChild(li);
             }
     })};
-
+    console.log('Before showEatenList() -function call')
+    console.log(selectedItems)
     showEatenList()
+    console.log('After showEatenList() -function call')
+    console.log(selectedItems)
 
     // Ehdotusten haku, kun käyttäjä kirjoittaa
     inputField.addEventListener("input", function () {
@@ -58,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Lisää valittu ruoka väliaikaiseen listaan
     function addToList(item) {
+        console.log('AddToList -function called')
         if (!selectedItems.includes(item)) { // Estää duplikaatit
             selectedItems.push(item);
 
@@ -72,12 +76,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Poista ruoka väliaikaisesta listasta
     function removeFromList(item, li) {
+        console.log('Remove from list function called')
         selectedItems = selectedItems.filter(i => i !== item);
         selectedList.removeChild(li);
     }
 
     // Lähetä lista Pythonille
     sendButton.addEventListener("click", function () {
+        console.log('You pressed EAT button, good job!')
         fetch('/save_items', {
             method: 'POST',
             headers: {
