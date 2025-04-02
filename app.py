@@ -111,7 +111,7 @@ def get_cookie():
 
         # set cookie
         resp = make_response(f'New user created: {new_username}')
-        resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=True, samesite='Lax', httponly=True)
+        resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=False, samesite='Lax', httponly=True)
         print(new_username)
         return resp
     
