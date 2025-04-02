@@ -86,9 +86,9 @@ def get_user_id_from_db(username):
     if row is None:
         print('User not found')
         return None
-    
-    global USER_ID
-    USER_ID = int(row[0])
+    else:
+        global USER_ID
+        USER_ID = int(row[0])
 
     get_eaten_history_data(USER_ID)
 
