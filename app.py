@@ -1,10 +1,9 @@
-from flask import Flask, render_template, request, jsonify, Response, make_response,url_for, flash, redirect
+from flask import Flask, render_template, request, jsonify, Response,url_for, flash, redirect
 import matplotlib.pyplot as plt
 import io
 import os
 import psycopg2
 import datetime
-import uuid
 import matplotlib
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -25,6 +24,8 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # DB connection in the Azure Database
 
+
+
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -33,7 +34,6 @@ db_params = {
     'port':'5432'
 }
 '''
-
 # DB connection locally for testing
 
 db_params = {
@@ -44,6 +44,7 @@ db_params = {
     'port':'5432'
 }
 '''
+
 # Connect to database
 def create_connection(db_params):
     try:
@@ -63,7 +64,7 @@ def create_connection(db_params):
 # Flask-Login Manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
+login_manager.login_view = "/"
 
 class User(UserMixin):
     def __init__(self, id, username):
@@ -130,15 +131,17 @@ def register():
 
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
             cur.execute("INSERT INTO users2 (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
-            user_id = cur.fetchone()[0]
+            
+            #user_id = cur.fetchone()[0]
             connection.commit()
 
-            user = User(user_id, username)
-            login_user(user)
-            print(f'REGISTERED: Current username: {current_user.username}')
-            print(f'REGISTERED: Current user id: {current_user.id}')
+            #user = User(user_id, username)
+            #login_user(user)
+
+            print(f'REGISTERED')
             flash("Account created successfully!", "success")
-            return redirect(url_for('index'))
+
+            return redirect(url_for('login'))
 
     return render_template('register.html')
 
