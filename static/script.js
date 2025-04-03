@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const suggestionsList = document.getElementById("suggestions");
     const selectedList = document.getElementById("selected-list");
     const alreadyEatenList = document.getElementById("already-eaten-list")
+    alreadyEatenList.innerText = ""
+    alreadyEatenList.innerHTML = ""
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
 
@@ -94,6 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
             selectedItems = []; // Tyhjennetään lista lähetysten jälkeen
             selectedList.innerHTML = ""; // Tyhjennetään UI
             alreadyEatenList.innerHTML = "";
+
             for (let item in data.selected_items) {
                 let li = document.createElement("li");
                 li.innerHTML = data.selected_items[item];
