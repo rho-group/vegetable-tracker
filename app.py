@@ -20,7 +20,6 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # DB connection in the Azure Database
-'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -38,7 +37,7 @@ db_params = {
     'database': "nutritions",
     'port':'5432'
 }
-
+'''
 # Connect to database
 def create_connection(db_params):
     try:
