@@ -7,6 +7,7 @@ import datetime
 import uuid
 import matplotlib
 from werkzeug.middleware.proxy_fix import ProxyFix
+from datetime import timedelta
 
 matplotlib.use('agg')
 
@@ -17,6 +18,7 @@ TARGET_VALUE = 30
 
 app = Flask(__name__)
 
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # DB connection in the Azure Database
@@ -116,7 +118,6 @@ def get_cookie():
         resp = make_response(f'New user created: {new_username}')
         resp.set_cookie('username', new_username, max_age=60*60*24*30, secure=True, samesite='None', httponly=True)
         print(new_username)
-        return resp
     
 
 
