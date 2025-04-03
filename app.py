@@ -25,7 +25,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # DB connection in the Azure Database
 
 
-
+'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -39,11 +39,11 @@ db_params = {
 db_params = {
     'host': "vegetable-tracker-db.postgres.database.azure.com",
     'user': "rhoAdmin",
-    'password': "ADD",
+    'password': "Salasana123",
     'database': "nutritions",
     'port':'5432'
 }
-'''
+
 
 # Connect to database
 def create_connection(db_params):
@@ -220,6 +220,9 @@ def get_bar_chart():
     current_value = len(selected_items)  # Number of selected items
 
     fig, ax = plt.subplots(figsize=(5, 4))
+
+    #ax.set_title(f"{current_value/30*100:.0f} % of your weekly goal!")
+    ax.text(-0.2, current_value + 0.2, f"{current_value/30*100:.0f} % of your weekly goal!")
 
     # Create a stacked bar: First part is the actual count, second is the remaining space
     ax.bar(" ",current_value, color="lightgreen")
