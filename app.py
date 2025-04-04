@@ -25,7 +25,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # DB connection in the Azure Database
 
 
-'''
+
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -39,11 +39,11 @@ db_params = {
 db_params = {
     'host': "vegetable-tracker-db.postgres.database.azure.com",
     'user': "rhoAdmin",
-    'password': "Salasana123",
+    'password': "ADD",
     'database': "nutritions",
     'port':'5432'
 }
-
+'''
 
 # Connect to database
 def create_connection(db_params):
