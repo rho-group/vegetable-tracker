@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 data.forEach(item => {
                     let li = document.createElement("li");
                     li.textContent = item;
+                    li.setAttribute('class','dropdown-item')
                     li.onclick = function () {
                         addToList(item);
                         inputField.value = "";
@@ -66,6 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             let li = document.createElement("li");
             li.textContent = item;
+            li.setAttribute('class','dropdown-item')
             li.onclick = function () {
                 removeFromList(item, li);
             };
