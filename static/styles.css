@@ -1,90 +1,35 @@
-body { 
-    font-family: Arial, sans-serif; 
-    margin-top: 50px; 
-    text-align: center;
+h1, h2, h3, div, li, ul {
+  font-family: 'Lora';
 }
 
-.container { 
-    display: inline-block; 
-    text-align: left;
+.dropdown-item:hover {
+  background-color: #f0f0f0; /* vaaleanharmaa */
+  color: #000; /* musta teksti */
 }
 
-input { 
-    width: 300px; 
-    padding: 8px; 
-    font-size: 16px; 
-    margin: 50px;
+#vitamin-box-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  max-width: 100%;
+  justify-content: center;
+}   
+
+.box {
+  width: 88px;
+  height: 40px;
+  background-color: lightgray;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+  font-size: smaller;
 }
 
-ul { 
-    list-style-type: none; 
-    padding: 0; 
-    margin: 5px 0 0 0; 
-    max-width: 300px; 
-    background: white; 
-}
-
-ul li { 
-    padding: 8px; 
-    cursor: pointer; 
-}
-
-ul li:hover { 
-    background: #f0f0f0; 
-}
-
-.selected-list { 
-    margin-top: 20px; 
-}
-
-
-.button-3 {
-  appearance: none;
-  background-color: #2ea44f;
-  border: 1px solid rgba(27, 31, 35, .15);
-  border-radius: 6px;
-  box-shadow: rgba(27, 31, 35, .1) 0 1px 0;
-  box-sizing: border-box;
-  color: #fff;
-  cursor: pointer;
-  display: inline-block;
-  font-family: -apple-system,system-ui,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji";
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
-  padding: 6px 16px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.button-3:focus:not(:focus-visible):not(.focus-visible) {
-  box-shadow: none;
-  outline: none;
-}
-
-.button-3:hover {
-  background-color: #2c974b;
-}
-
-.button-3:focus {
-  box-shadow: rgba(46, 164, 79, .4) 0 0 0 3px;
-  outline: none;
-}
-
-.button-3:disabled {
-  background-color: #94d3a2;
-  border-color: rgba(27, 31, 35, .1);
-  color: rgba(255, 255, 255, .8);
-  cursor: default;
-}
-
-.button-3:active {
-  background-color: #298e46;
-  box-shadow: rgba(20, 70, 32, .2) 0 1px 0 inset;
+.green {
+  background-color: rgb(88, 197, 88) !important;
 }

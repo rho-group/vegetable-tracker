@@ -7,12 +7,72 @@ document.addEventListener("DOMContentLoaded", function () {
     alreadyEatenList.innerHTML = ""
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
+    const vitaminBoxContainer = document.getElementById("vitamin-box-container");
+    
+    let selectedItems = [];
+    
+    // Dictionary for creating vitamin boxes
+    let vitamin_names = {
+        calsium:'Calsium',
+        carotenoids:'Carotenoids',
+        iron:'Iron',
+        fiber:'Fiber',
+        folate:'Folate',
+        iodine:'Iodine',
+        kalium:'Kalium',
+        magnesium:'Magnesium',
+        niacin:'Niacin',
+        phosphorus:'Phosphorus',
+        riboflavin:'Riboflavin',
+        selenium:'Selenium',
+        thiamin:'Thiamin',
+        vitamina:'Vitamin A',
+        vitaminb12:'Vitamin B12',
+        vitaminc:'Vitamin C',
+        vitamind:'Vitamin D',
+        vitamink:'Vitamin K',
+        vitaminb6:'Vitamin B6',
+        zinc:'Zinc'
+    }
 
-    let selectedItems = []; // Väliaikainen lista
+    // Create the boxes for vitamins
+    Object.keys(vitamin_names).forEach(vitamin => {
+        const box = document.createElement('div');
+        box.className = 'box';
+        box.id = vitamin
+        box.textContent = vitamin_names[vitamin];
+        vitaminBoxContainer.appendChild(box);
+    })
+
+    refreshVitaminBoxes()
+
+    function refreshVitaminBoxes() {
+        const boxes = document.querySelectorAll(".box");
+        
+        fetch('get_vitamins')
+        .then(response => response.json())
+        .then(data => {
+            boxes.forEach(box => {
+                boxId = box.id
+                if (data[boxId] === 1) {
+                    box.classList.add("green");
+                } else {
+                    box.classList.remove("green")
+                }
+          });
+
+        })
+
+    }
+
 
     function refreshChart() {
         barChartImg.src = "/get_bar_chart?" + new Date().getTime(); // Prevent caching
     }
+
+    function toTitleCase(str) {
+        return str.replace(/\w\S*/g, text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase());
+      }
 
     function showEatenList() {
         fetch('/get_items')
@@ -23,8 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             for (let item in data) {
                 let li = document.createElement("li");
-                li.innerHTML = data[item];
-
+                li.textContent = toTitleCase(data[item])
                 alreadyEatenList.appendChild(li);
             }
     })};
@@ -46,7 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 suggestionsList.innerHTML = "";
                 data.forEach(item => {
                     let li = document.createElement("li");
-                    li.textContent = item;
+                    li.textContent = toTitleCase(item);
                     li.setAttribute('class','dropdown-item')
                     li.onclick = function () {
                         addToList(item);
@@ -61,12 +120,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Lisää valittu ruoka väliaikaiseen listaan
     function addToList(item) {
-        console.log('AddToList -function called')
         if (!selectedItems.includes(item)) { // Estää duplikaatit
             selectedItems.push(item);
 
             let li = document.createElement("li");
-            li.textContent = item;
+            li.textContent = toTitleCase(item);
             li.setAttribute('class','dropdown-item')
             li.onclick = function () {
                 removeFromList(item, li);
@@ -84,7 +142,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Lähetä lista Pythonille
     sendButton.addEventListener("click", function () {
-        console.log('You pressed EAT button, good job!')
         fetch('/save_items', {
             method: 'POST',
             headers: {
@@ -101,13 +158,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
             for (let item in data.selected_items) {
                 let li = document.createElement("li");
-                li.innerHTML = data.selected_items[item];
+                //li.innerHTML = data.selected_items[item];
+                li.textContent = toTitleCase(data.selected_items[item])
 
                 alreadyEatenList.appendChild(li);
             }
-        
+            refreshVitaminBoxes()
             refreshChart();
         })
         .catch(error => console.error("Error sending data:", error));
     });
+
 });
