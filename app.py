@@ -34,6 +34,7 @@ db_params = {
     'port':'5432'
 }
 '''
+
 # DB connection locally for testing
 
 db_params = {

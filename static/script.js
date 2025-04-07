@@ -7,6 +7,38 @@ document.addEventListener("DOMContentLoaded", function () {
     alreadyEatenList.innerHTML = ""
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
+    const vitaminBoxContainer = document.getElementById("vitamin-box-container");
+
+    // Dictionary for vitamin boxes
+    let vitamins = {
+        ca:1,
+        carotens:0,
+        fe:0,
+        fibc:0,
+        fol:0,
+        jodi:0,
+        k:0,
+        mg:0,
+        niaeq:0,
+        p:0,
+        ribf:0,
+        se:0,
+        thia:0,
+        vita:0,
+        vitb12:0,
+        vitc:0,
+        vitd:0,
+        vite:0,
+        vitpyrid:0,
+        zn:0
+    }
+    
+    Object.keys(vitamins).forEach(vitamin => {
+        const box = document.createElement('div');
+        box.className = 'box';
+        box.textContent = vitamin;
+        vitaminBoxContainer.appendChild(box);
+    })
 
     let selectedItems = []; // Väliaikainen lista
 
@@ -84,7 +116,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Lähetä lista Pythonille
     sendButton.addEventListener("click", function () {
-        console.log('You pressed EAT button, good job!')
         fetch('/save_items', {
             method: 'POST',
             headers: {
@@ -109,5 +140,19 @@ document.addEventListener("DOMContentLoaded", function () {
             refreshChart();
         })
         .catch(error => console.error("Error sending data:", error));
+    });
+
+    // Function to check the vitamin boxes
+    sendButton.addEventListener("click", function() {
+        const boxes = document.querySelectorAll(".box");
+
+        boxes.forEach(box => {
+            boxName = box.innerText
+            if (vitamins[boxName] === 1) {
+                box.classList.add("green");
+            } else {
+                box.classList.remove("green")
+            }
+      });
     });
 });
