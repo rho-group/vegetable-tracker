@@ -5,9 +5,9 @@ import os
 import psycopg2
 import datetime
 import matplotlib
-from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
+import pandas as pd
 
 
 matplotlib.use('agg')
@@ -20,11 +20,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
 bcrypt = Bcrypt(app)
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # DB connection in the Azure Database
-
-
 
 db_params = {
     'host': os.getenv('DB_HOST'),
@@ -33,8 +30,8 @@ db_params = {
     'database': os.getenv('DB_NAME'),
     'port':'5432'
 }
-'''
 
+'''
 # DB connection locally for testing
 
 db_params = {
@@ -81,7 +78,8 @@ cursor = connection.cursor()
 # Get all vegetables available from the database
 cursor.execute("SELECT foodname FROM vegetables;")
 rows = cursor.fetchall()
-vegetable_list = [row[0].capitalize() for row in rows]
+# ADD CAPITALIZE
+vegetable_list = [row[0] for row in rows]
 
 
 @login_manager.user_loader
@@ -128,16 +126,12 @@ def register():
 
             if existing_user:
                 flash("Username already exists!", "danger")
-                return redirect(url_for('signup'))
+                return redirect(url_for('/'))
 
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
             cur.execute("INSERT INTO users2 (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
             
-            #user_id = cur.fetchone()[0]
             connection.commit()
-
-            #user = User(user_id, username)
-            #login_user(user)
 
             print(f'REGISTERED')
             flash("Account created successfully!", "success")
@@ -202,8 +196,8 @@ def save_items():
     items = request.json.get('items')
     current_timestamp = datetime.datetime.now()
     for item in items:
-        #if item in selected_items:
-        #    selected_items.remove(item)
+        if item in selected_items:
+            selected_items.remove(item)
         selected_items.append(item)
         cursor.execute("INSERT INTO eaten2 (user_id, veg_id, date) VALUES (%s, %s, %s);",(USER_ID,(vegetable_list.index(item)+1),current_timestamp))
         connection.commit()
@@ -239,6 +233,45 @@ def get_bar_chart():
 
     return Response(img.getvalue(), mimetype='image/png')
 
+# Get information about vitamins of eaten vegetables
+@app.route('/get_vitamins')
+def get_vitamins():
+    vitamin_dictionary = {
+        'calsium':0,
+        'carotenoids':0,
+        'iron':0,
+        'fiber':0,
+        'folate':0,
+        'iodine':0,
+        'kalium':0,
+        'magnesium':0,
+        'niacin':0,
+        'phosphorus':0,
+        'riboflavin':0,
+        'selenium':0,
+        'thiamin':0,
+        'vitamina':0,
+        'vitaminb12':0,
+        'vitaminc':0,
+        'vitamind':0,
+        'vitamink':0,
+        'vitaminb6':0,
+        'zinc':0
+    }
+    query = """
+    SELECT foodname, calsium, carotenoids, iron, fiber, 
+    folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
+    vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
+    FROM vegetables
+    WHERE foodname = ANY(%s)
+    """
+    df = pd.read_sql(query, connection, params=(selected_items,))
+
+    for key, value in vitamin_dictionary.items():
+        if df[key].any():
+            vitamin_dictionary[key] = 1
+
+    return vitamin_dictionary
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -8,43 +8,71 @@ document.addEventListener("DOMContentLoaded", function () {
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
     const vitaminBoxContainer = document.getElementById("vitamin-box-container");
-
-    // Dictionary for vitamin boxes
-    let vitamins = {
-        ca:1,
-        carotens:0,
-        fe:0,
-        fibc:0,
-        fol:0,
-        jodi:0,
-        k:0,
-        mg:0,
-        niaeq:0,
-        p:0,
-        ribf:0,
-        se:0,
-        thia:0,
-        vita:0,
-        vitb12:0,
-        vitc:0,
-        vitd:0,
-        vite:0,
-        vitpyrid:0,
-        zn:0
-    }
     
-    Object.keys(vitamins).forEach(vitamin => {
+    let selectedItems = [];
+    
+    // Dictionary for creating vitamin boxes
+    let vitamin_names = {
+        calsium:'Calsium',
+        carotenoids:'Carotenoids',
+        iron:'Iron',
+        fiber:'Fiber',
+        folate:'Folate',
+        iodine:'Iodine',
+        kalium:'Kalium',
+        magnesium:'Magnesium',
+        niacin:'Niacin',
+        phosphorus:'Phosphorus',
+        riboflavin:'Riboflavin',
+        selenium:'Selenium',
+        thiamin:'Thiamin',
+        vitamina:'Vitamin A',
+        vitaminb12:'Vitamin B12',
+        vitaminc:'Vitamin C',
+        vitamind:'Vitamin D',
+        vitamink:'Vitamin K',
+        vitaminb6:'Vitamin B6',
+        zinc:'Zinc'
+    }
+
+    // Create the boxes for vitamins
+    Object.keys(vitamin_names).forEach(vitamin => {
         const box = document.createElement('div');
         box.className = 'box';
-        box.textContent = vitamin;
+        box.id = vitamin
+        box.textContent = vitamin_names[vitamin];
         vitaminBoxContainer.appendChild(box);
     })
 
-    let selectedItems = []; // Väliaikainen lista
+    refreshVitaminBoxes()
+
+    function refreshVitaminBoxes() {
+        const boxes = document.querySelectorAll(".box");
+        
+        fetch('get_vitamins')
+        .then(response => response.json())
+        .then(data => {
+            boxes.forEach(box => {
+                boxId = box.id
+                if (data[boxId] === 1) {
+                    box.classList.add("green");
+                } else {
+                    box.classList.remove("green")
+                }
+          });
+
+        })
+
+    }
+
 
     function refreshChart() {
         barChartImg.src = "/get_bar_chart?" + new Date().getTime(); // Prevent caching
     }
+
+    function toTitleCase(str) {
+        return str.replace(/\w\S*/g, text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase());
+      }
 
     function showEatenList() {
         fetch('/get_items')
@@ -55,8 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             for (let item in data) {
                 let li = document.createElement("li");
-                li.innerHTML = data[item];
-
+                li.textContent = toTitleCase(data[item])
                 alreadyEatenList.appendChild(li);
             }
     })};
@@ -78,7 +105,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 suggestionsList.innerHTML = "";
                 data.forEach(item => {
                     let li = document.createElement("li");
-                    li.textContent = item;
+                    li.textContent = toTitleCase(item);
                     li.setAttribute('class','dropdown-item')
                     li.onclick = function () {
                         addToList(item);
@@ -93,12 +120,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Lisää valittu ruoka väliaikaiseen listaan
     function addToList(item) {
-        console.log('AddToList -function called')
         if (!selectedItems.includes(item)) { // Estää duplikaatit
             selectedItems.push(item);
 
             let li = document.createElement("li");
-            li.textContent = item;
+            li.textContent = toTitleCase(item);
             li.setAttribute('class','dropdown-item')
             li.onclick = function () {
                 removeFromList(item, li);
@@ -132,27 +158,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
             for (let item in data.selected_items) {
                 let li = document.createElement("li");
-                li.innerHTML = data.selected_items[item];
+                //li.innerHTML = data.selected_items[item];
+                li.textContent = toTitleCase(data.selected_items[item])
 
                 alreadyEatenList.appendChild(li);
             }
-        
+            refreshVitaminBoxes()
             refreshChart();
         })
         .catch(error => console.error("Error sending data:", error));
     });
 
-    // Function to check the vitamin boxes
-    sendButton.addEventListener("click", function() {
-        const boxes = document.querySelectorAll(".box");
-
-        boxes.forEach(box => {
-            boxName = box.innerText
-            if (vitamins[boxName] === 1) {
-                box.classList.add("green");
-            } else {
-                box.classList.remove("green")
-            }
-      });
-    });
 });
