@@ -105,10 +105,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 suggestionsList.innerHTML = "";
                 data.forEach(item => {
                     let li = document.createElement("li");
-                    li.textContent = toTitleCase(item);
+                    const displayString = `${item.vegetable}: ${item.vitamins.join(', ')}`;
+                    li.textContent = toTitleCase(displayString);
                     li.setAttribute('class','dropdown-item')
                     li.onclick = function () {
-                        addToList(item);
+                        addToList(item.vegetable);
                         inputField.value = "";
                         suggestionsList.innerHTML = "";
                     };

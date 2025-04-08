@@ -82,7 +82,7 @@ vegetable_list = [row[0] for row in rows]
 
 def suggest_vitamins(veg_name):
     vit_dict = {
-    'calsium': 1, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
+    'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
     'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
     'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
     'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
@@ -90,24 +90,22 @@ def suggest_vitamins(veg_name):
 
     veg_name.upper()
 
-    query = f"""
-    SELECT foodname, calsium, carotenoids, iron, fiber, 
+    query = """
+    SELECT calsium, carotenoids, iron, fiber, 
     folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
     vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
     FROM vegetables
-    WHERE foodname = {veg_name}
+    WHERE foodname = %s;
     """
     
 
-    #df = pd.read_sql(query, connection, params=(veg_name))
+    df = pd.read_sql(query, connection, params=(veg_name,))
 
-    #for key, value in vit_dict.items():
-    #    if df[key].any():
-    #        vit_dict[key] = 1
+    for key, value in vit_dict.items():
+        if df[key].any():
+            vit_dict[key] = 1
 
     return vit_dict
-
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -205,12 +203,17 @@ def suggest():
 
     if suggestions:
         vitamins_info = {}
+        suggestion_vitamin = []
         for veg in suggestions:
-            vitamins_info[veg] = {key: value for key, value in suggest_vitamins()[veg].items() if value == 1}
-    
-    print(vitamins_info) 
+            vitamins_info[veg] = {key: value for key, value in suggest_vitamins(veg).items() if value == 1}
+        
+        for vegetable, vitamin in vitamins_info.items():
+            vitamins_list = list(vitamin.keys())
 
-    return jsonify(suggestions)
+            suggestion_vitamin.append({"vegetable": vegetable, "vitamins": vitamins_list})
+
+
+    return jsonify(suggestion_vitamin)
 
 # This route is for removing an item from the list
 @app.route('/remove_item', methods=['DELETE'])
