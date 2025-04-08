@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
     const vitaminBoxContainer = document.getElementById("vitamin-box-container");
+    let debounceTimer;
+    const debounceDelay = 500;
     
     let selectedItems = [];
     
@@ -34,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         vitaminb6:'Vitamin B6',
         zinc:'Zinc'
     }
+
 
     // Create the boxes for vitamins
     Object.keys(vitamin_names).forEach(vitamin => {
@@ -94,12 +97,15 @@ document.addEventListener("DOMContentLoaded", function () {
     inputField.addEventListener("input", function () {
         let query = this.value.trim();
 
+        clearTimeout(debounceTimer);
+
         if (query.length === 0) {
             suggestionsList.innerHTML = "";
             return;
         }
 
-        fetch(`/suggest?q=${query}`)
+        debounceTimer = setTimeout(() => {
+            fetch(`/suggest?q=${query}`)
             .then(response => response.json())
             .then(data => {
                 suggestionsList.innerHTML = "";
@@ -117,27 +123,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             })
             .catch(error => console.error("Error fetching suggestions:", error));
+        }, debounceDelay);
+
+        
     });
 
     // Lisää valittu ruoka väliaikaiseen listaan
-    function addToList(item) {
-        if (!selectedItems.includes(item)) { // Estää duplikaatit
-            selectedItems.push(item);
+    function addToList(vegetable) {
+        if (!selectedItems.includes(vegetable)) { // Estää duplikaatit
+            selectedItems.push(vegetable);
 
             let li = document.createElement("li");
-            li.textContent = toTitleCase(item);
+            li.textContent = toTitleCase(vegetable);
             li.setAttribute('class','dropdown-item')
             li.onclick = function () {
-                removeFromList(item, li);
+                removeFromList(vegetable, li);
             };
             selectedList.appendChild(li);
         }
     }
 
     // Poista ruoka väliaikaisesta listasta
-    function removeFromList(item, li) {
+    function removeFromList(vegetable, li) {
         console.log('Remove from list function called')
-        selectedItems = selectedItems.filter(i => i !== item);
+        selectedItems = selectedItems.filter(i => i !== vegetable);
         selectedList.removeChild(li);
     }
 

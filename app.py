@@ -80,6 +80,7 @@ rows = cursor.fetchall()
 # ADD CAPITALIZE
 vegetable_list = [row[0] for row in rows]
 
+
 def suggest_vitamins(veg_name):
     vit_dict = {
     'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
