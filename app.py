@@ -31,7 +31,6 @@ db_params = {
     'database': os.getenv('DB_NAME'),
     'port':'5432'
 }
-
 '''
 # DB connection locally for testing
 
@@ -80,6 +79,35 @@ cursor = connection.cursor()
 cursor.execute("SELECT foodname FROM vegetables;")
 rows = cursor.fetchall()
 vegetable_list = [row[0] for row in rows]
+
+
+query = """
+SELECT foodname, calsium, carotenoids, iron, fiber, 
+folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
+vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
+FROM vegetables;
+"""
+
+veg_df = pd.read_sql(query, connection)
+
+def suggest_vitamins(veg_name):
+    vit_dict = {
+    'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
+    'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
+    'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
+    'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
+    'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0 }
+
+    veg_name.upper()
+
+    single_df = veg_df[veg_df['foodname'] == veg_name]
+
+    for key, value in vit_dict.items():
+        if single_df[key].any():
+            vit_dict[key] = 1
+
+    return vit_dict
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -177,7 +205,20 @@ def index():
 def suggest():
     query = request.args.get('q', '')
     suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
-    return jsonify(suggestions)
+
+    if suggestions:
+        vitamins_info = {}
+        suggestion_vitamin = []
+        for veg in suggestions:
+            vitamins_info[veg] = {key: value for key, value in suggest_vitamins(veg).items() if value == 1}
+        
+        for vegetable, vitamin in vitamins_info.items():
+            vitamins_list = list(vitamin.keys())
+
+            suggestion_vitamin.append({"vegetable": vegetable, "vitamins": vitamins_list})
+
+
+    return jsonify(suggestion_vitamin)
 
 # This route is for removing an item from the list
 @app.route('/remove_item', methods=['DELETE'])
@@ -219,10 +260,12 @@ def save_items():
         if item in selected_items:
             selected_items.remove(item)
         selected_items.append(item)
+
         current_timestamp = current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
 
         cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",
                        (USER_ID,(vegetable_list.index(item) + 1),current_timestamp))
+
         connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
