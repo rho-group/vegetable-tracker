@@ -22,7 +22,7 @@ bcrypt = Bcrypt(app)
 
 
 # DB connection in the Azure Database
-
+'''
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -30,18 +30,17 @@ db_params = {
     'database': os.getenv('DB_NAME'),
     'port':'5432'
 }
-
 '''
 # DB connection locally for testing
 
 db_params = {
     'host': "vegetable-tracker-db.postgres.database.azure.com",
     'user': "rhoAdmin",
-    'password': "ADD",
+    'password': "ViliVihannes123",
     'database': "nutritions",
     'port':'5432'
 }
-'''
+
 
 # Connect to database
 def create_connection(db_params):
@@ -80,6 +79,34 @@ cursor.execute("SELECT foodname FROM vegetables;")
 rows = cursor.fetchall()
 # ADD CAPITALIZE
 vegetable_list = [row[0] for row in rows]
+
+def suggest_vitamins(veg_name):
+    vit_dict = {
+    'calsium': 1, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
+    'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
+    'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
+    'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
+    'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0 }
+
+    veg_name.upper()
+
+    query = f"""
+    SELECT foodname, calsium, carotenoids, iron, fiber, 
+    folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
+    vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
+    FROM vegetables
+    WHERE foodname = {veg_name}
+    """
+    
+
+    #df = pd.read_sql(query, connection, params=(veg_name))
+
+    #for key, value in vit_dict.items():
+    #    if df[key].any():
+    #        vit_dict[key] = 1
+
+    return vit_dict
+
 
 
 @login_manager.user_loader
@@ -175,6 +202,14 @@ def index():
 def suggest():
     query = request.args.get('q', '')
     suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
+
+    if suggestions:
+        vitamins_info = {}
+        for veg in suggestions:
+            vitamins_info[veg] = {key: value for key, value in suggest_vitamins()[veg].items() if value == 1}
+    
+    print(vitamins_info) 
+
     return jsonify(suggestions)
 
 # This route is for removing an item from the list
