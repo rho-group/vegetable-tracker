@@ -22,7 +22,7 @@ bcrypt = Bcrypt(app)
 
 
 # DB connection in the Azure Database
-'''
+
 db_params = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -36,11 +36,11 @@ db_params = {
 db_params = {
     'host': "vegetable-tracker-db.postgres.database.azure.com",
     'user': "rhoAdmin",
-    'password': "ViliVihannes123",
+    'password': "ADD",
     'database': "nutritions",
     'port':'5432'
 }
-
+'''
 
 # Connect to database
 def create_connection(db_params):
@@ -80,6 +80,14 @@ rows = cursor.fetchall()
 # ADD CAPITALIZE
 vegetable_list = [row[0] for row in rows]
 
+query = """
+SELECT foodname, calsium, carotenoids, iron, fiber, 
+folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
+vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
+FROM vegetables;
+"""
+
+veg_df = pd.read_sql(query, connection)
 
 def suggest_vitamins(veg_name):
     vit_dict = {
@@ -91,19 +99,10 @@ def suggest_vitamins(veg_name):
 
     veg_name.upper()
 
-    query = """
-    SELECT calsium, carotenoids, iron, fiber, 
-    folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
-    vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
-    FROM vegetables
-    WHERE foodname = %s;
-    """
-    
-
-    df = pd.read_sql(query, connection, params=(veg_name,))
+    single_df = veg_df[veg_df['foodname'] == veg_name]
 
     for key, value in vit_dict.items():
-        if df[key].any():
+        if single_df[key].any():
             vit_dict[key] = 1
 
     return vit_dict
@@ -111,7 +110,7 @@ def suggest_vitamins(veg_name):
 @login_manager.user_loader
 def load_user(user_id):
     cur = connection.cursor()
-    cur.execute("SELECT id, username FROM users2 WHERE id = %s", (user_id,))
+    cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
     user_data = cur.fetchone()
 
     if user_data:
@@ -125,7 +124,7 @@ def login():
         password = request.form['password']
 
         cur = connection.cursor()
-        cur.execute("SELECT id, username, password FROM users2 WHERE username = %s", (username,))
+        cur.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
         user_data = cur.fetchone()
 
         if user_data and bcrypt.check_password_hash(user_data[2], password):
@@ -147,7 +146,7 @@ def register():
             password = request.form['password']
 
             cur = connection.cursor()
-            cur.execute("SELECT id FROM users2 WHERE username = %s", (username,))
+            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
             existing_user = cur.fetchone()
 
             if existing_user:
@@ -155,7 +154,7 @@ def register():
                 return redirect(url_for('/'))
 
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            cur.execute("INSERT INTO users2 (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
+            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
             
             connection.commit()
 
@@ -177,7 +176,7 @@ def logout():
 
 # Get eaten history data from database for current user
 def get_eaten_history_data(id):
-    cursor.execute(f"SELECT distinct veg_id FROM eaten2 WHERE user_id = {id};")
+    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {id};")
     veg_ids = cursor.fetchall()
     
     for item in veg_ids:
@@ -238,7 +237,7 @@ def save_items():
         if item in selected_items:
             selected_items.remove(item)
         selected_items.append(item)
-        cursor.execute("INSERT INTO eaten2 (user_id, veg_id, date) VALUES (%s, %s, %s);",(USER_ID,(vegetable_list.index(item)+1),current_timestamp))
+        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",(USER_ID,(vegetable_list.index(item)+1),current_timestamp))
         connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
