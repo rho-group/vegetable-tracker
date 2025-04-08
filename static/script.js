@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const vitaminBoxContainer = document.getElementById("vitamin-box-container");
     
     let selectedItems = [];
-    
+
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
     // Dictionary for creating vitamin boxes
     let vitamin_names = {
         calsium:'Calsium',
@@ -144,10 +146,11 @@ document.addEventListener("DOMContentLoaded", function () {
     sendButton.addEventListener("click", function () {
         fetch('/save_items', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ items: selectedItems })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: selectedItems,       
+                timezone: userTimezone  // Send the user's local timezone
+            })
         })
         .then(response => response.json())
         .then(data => {

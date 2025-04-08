@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import io
 import os
 import psycopg2
-import datetime
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import matplotlib
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -78,19 +79,20 @@ cursor = connection.cursor()
 # Get all vegetables available from the database
 cursor.execute("SELECT foodname FROM vegetables;")
 rows = cursor.fetchall()
-# ADD CAPITALIZE
 vegetable_list = [row[0] for row in rows]
-
 
 @login_manager.user_loader
 def load_user(user_id):
     cur = connection.cursor()
-    cur.execute("SELECT id, username FROM users2 WHERE id = %s", (user_id,))
+    cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
     user_data = cur.fetchone()
 
     if user_data:
         return User(user_data[0], user_data[1])
     return None
+
+
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -99,7 +101,7 @@ def login():
         password = request.form['password']
 
         cur = connection.cursor()
-        cur.execute("SELECT id, username, password FROM users2 WHERE username = %s", (username,))
+        cur.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
         user_data = cur.fetchone()
 
         if user_data and bcrypt.check_password_hash(user_data[2], password):
@@ -121,7 +123,7 @@ def register():
             password = request.form['password']
 
             cur = connection.cursor()
-            cur.execute("SELECT id FROM users2 WHERE username = %s", (username,))
+            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
             existing_user = cur.fetchone()
 
             if existing_user:
@@ -129,7 +131,7 @@ def register():
                 return redirect(url_for('/'))
 
             hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            cur.execute("INSERT INTO users2 (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
+            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
             
             connection.commit()
 
@@ -151,7 +153,7 @@ def logout():
 
 # Get eaten history data from database for current user
 def get_eaten_history_data(id):
-    cursor.execute(f"SELECT distinct veg_id FROM eaten2 WHERE user_id = {id};")
+    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {id};")
     veg_ids = cursor.fetchall()
     
     for item in veg_ids:
@@ -189,17 +191,38 @@ def remove_item():
     print(f'ITEM DELETED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
 
+
+# Convert local datetime to UTC using zoneinfo
+def convert_to_utc_now(user_timezone: str) -> datetime:
+    try:
+        local_tz = ZoneInfo(user_timezone)
+        local_now = datetime.now(local_tz)
+        utc_now = local_now.astimezone()
+        return utc_now
+    
+    except Exception as e:
+        raise ValueError(f"Timezone conversion failed: {e}")
+
 # Save selected vegetables to backend
 @app.route('/save_items', methods=['POST'])
 @login_required
 def save_items():
     items = request.json.get('items')
-    current_timestamp = datetime.datetime.now()
+    user_timezone = request.json.get('timezone')
+
+    if not user_timezone:
+        return jsonify({'error': 'Timezone not provided'}), 400
+
+    current_timestamp = convert_to_utc_now(user_timezone)
+
     for item in items:
         if item in selected_items:
             selected_items.remove(item)
         selected_items.append(item)
-        cursor.execute("INSERT INTO eaten2 (user_id, veg_id, date) VALUES (%s, %s, %s);",(USER_ID,(vegetable_list.index(item)+1),current_timestamp))
+        current_timestamp = current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
+
+        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",
+                       (USER_ID,(vegetable_list.index(item) + 1),current_timestamp))
         connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
