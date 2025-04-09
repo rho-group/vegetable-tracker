@@ -10,13 +10,18 @@ from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 from flask import session
-
+'''
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 name = os.getenv('DB_NAME')
-
+'''
+user = 'rhoAdmin'
+password = 'ViliVihannes123'
+host = 'vegetable-tracker-db.postgres.database.azure.com'
+port = '5432'
+name = 'nutritions'
 
 matplotlib.use('agg')
 
@@ -203,6 +208,10 @@ def remove_item():
         session['selected_items'] = items
     return jsonify({'success': True, 'selected_items': items})
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 
 # Convert local datetime to UTC using zoneinfo
 def convert_to_utc_now(user_timezone: str) -> datetime:
@@ -299,6 +308,19 @@ def get_vitamins():
                 vitamin_dictionary[key] = 1
 
     return jsonify(vitamin_dictionary)
+
+@app.route('/get_vegetables_with_vitamin')
+def get_vegetables_with_vitamin():
+    vitamin = request.args.get('vitamin')
+
+    if vitamin not in Vegetable.__table__.columns:
+        return jsonify([])
+
+    # Hae vihannekset joissa tämä vitamiini on arvoltaan > 0
+    vegetables = Vegetable.query.filter(getattr(Vegetable, vitamin) > 0).all()
+    names = [v.foodname.capitalize() for v in vegetables]
+
+    return jsonify(names)
 
 
 

@@ -33,3 +33,15 @@ h1, h2, h3, div, li, ul {
 .green {
   background-color: rgb(88, 197, 88) !important;
 }
+
+.box2 {
+  padding: 10px;
+  margin: 5px;
+  background-color: #e1f5fe;
+  border: 1px solid #81d4fa;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.box2:hover {
+  background-color: #b3e5fc;
+}
