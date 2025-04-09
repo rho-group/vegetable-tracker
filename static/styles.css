@@ -56,3 +56,15 @@ h1, h2, h3, h4, div, li, ul {
   font-size: smaller;
   color: gray;
 }
+
+.box2 {
+  padding: 10px;
+  margin: 5px;
+  background-color: #e1f5fe;
+  border: 1px solid #81d4fa;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.box2:hover {
+  background-color: #b3e5fc;
+}

@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const barChartImg = document.getElementById("barChart");
     const sendButton = document.getElementById("eat-me-button");
     const vitaminBoxContainer = document.getElementById("vitamin-box-container");
+   
     let debounceTimer;
     const debounceDelay = 200;
     
@@ -70,6 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     }
 
+   
 
     function refreshChart() {
         barChartImg.src = "/get_bar_chart?" + new Date().getTime(); // Prevent caching
