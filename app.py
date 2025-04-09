@@ -9,6 +9,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
+from flask import session
 
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
@@ -19,7 +20,7 @@ name = os.getenv('DB_NAME')
 
 matplotlib.use('agg')
 
-selected_items = []
+#selected_items = []
 TARGET_VALUE = 30
 
 app = Flask(__name__)
@@ -88,13 +89,13 @@ def get_vegetable_list():
 def get_eaten_history_data(id):
     # Haetaan veg_id:t eaten-taulusta käyttäjälle
     veg_ids = Eaten.query.filter_by(user_id=id).distinct(Eaten.veg_id).all()
-
-
+ 
+    session['selected_items'] = []
+ 
     for item in veg_ids:
-        #vegetable = Vegetable.query.get(item.veg_id)
         vegetable = db.session.get(Vegetable, item.veg_id)
-        if vegetable != None:
-            selected_items.append(vegetable.foodname)
+        if vegetable is not None:
+            session['selected_items'].append(vegetable.foodname)
 
 def suggest_vitamins(veg_name):
     vit_dict = {
@@ -125,6 +126,7 @@ def login():
         if user and bcrypt.check_password_hash(user.password, password):
             #user = User(username=username, password=password)
             login_user(user)
+            session['selected_items'] = []
             print(f'LOGGED IN: Current username: {current_user.username}')
             print(f'LOGGED IN: Current user id: {current_user.id}')
             flash("Login successful!", "success")
@@ -160,7 +162,7 @@ def register():
 @app.route('/logout')
 @login_required
 def logout():
-    selected_items.clear()
+    session.pop('selected_items', None)
     logout_user()
     flash("You have logged out.", "info")
     return redirect(url_for('login'))
@@ -169,10 +171,7 @@ def logout():
 @app.route('/home')
 @login_required
 def index():
-    selected_items.clear()
-    global USER_ID
-    USER_ID = current_user.id
-    get_eaten_history_data(USER_ID)
+    get_eaten_history_data(current_user.id)
 
     return render_template('index.html')
 
@@ -197,12 +196,12 @@ def suggest():
 @login_required
 def remove_item():
     item = request.json.get('item')
-    
-    if item in selected_items:
-        selected_items.remove(item)  # Remove from the server-side list
-    
-    print(f'ITEM DELETED, selected list: {selected_items}')
-    return jsonify({'success': True, 'selected_items': selected_items})
+    items = session.get('selected_items', [])
+
+    if item in items:
+        items.remove(item)
+        session['selected_items'] = items
+    return jsonify({'success': True, 'selected_items': items})
 
 
 # Convert local datetime to UTC using zoneinfo
@@ -228,33 +227,38 @@ def save_items():
 
     current_timestamp = convert_to_utc_now(user_timezone)
 
+    current_selected = session.get('selected_items', [])
+
     for item in items:
-        if item in selected_items:
-            selected_items.remove(item)
-        selected_items.append(item)
+            if item in current_selected:
+                current_selected.remove(item)
+            current_selected.append(item)
 
-        # Create and insert record into Eaten table using SQLAlchemy ORM
-        vegetable_list = get_vegetable_list()
-        vegetable_id = vegetable_list.index(item) + 1  # Assuming veg_id corresponds to index
-        current_timestamp = current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
-        
-        new_eaten = Eaten(user_id=USER_ID, veg_id=vegetable_id, date=current_timestamp)
-        db.session.add(new_eaten)
-        db.session.commit()
+            veg = Vegetable.query.filter_by(foodname=item).first()
+            if veg:
+                new_eaten = Eaten(
+                    user_id=current_user.id,
+                    veg_id=veg.id,
+                    date=current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
+                )
+                db.session.add(new_eaten)
 
-    print(f'ITEMS ADDED, selected list: {selected_items}')
-    return jsonify({'success': True, 'selected_items': selected_items})
+    db.session.commit()
+    session['selected_items'] = current_selected
+
+    print(f'ITEMS ADDED, selected list: {current_selected}')
+    return jsonify({'success': True, 'selected_items': current_selected})
 
 
 # Get eaten list to frontend
 @app.route('/get_items', methods=['GET'])
 def get_items():
-    return jsonify(selected_items)
+    return jsonify(session.get('selected_items', []))
 
 # Generate Stacked Bar Chart
 @app.route('/get_bar_chart')
 def get_bar_chart():
-    current_value = len(selected_items)  # Number of selected items
+    current_value = len(session.get('selected_items', []))  # Number of selected items
 
     fig, ax = plt.subplots(figsize=(5, 4))
 
@@ -286,7 +290,7 @@ def get_vitamins():
     }
 
     # Query to get the selected vegetable records using SQLAlchemy ORM
-    vegetables = Vegetable.query.filter(Vegetable.foodname.in_(selected_items)).all()
+    vegetables = Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', []))).all()
 
     # Update the vitamin dictionary based on the fetched data
     for vegetable in vegetables:
