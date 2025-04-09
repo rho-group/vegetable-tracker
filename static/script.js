@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const sendButton = document.getElementById("eat-me-button");
     const vitaminBoxContainer = document.getElementById("vitamin-box-container");
     let debounceTimer;
-    const debounceDelay = 0;
+    const debounceDelay = 200;
     
     let selectedItems = [];
 

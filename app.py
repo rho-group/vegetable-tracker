@@ -2,124 +2,109 @@ from flask import Flask, render_template, request, jsonify, Response,url_for, fl
 import matplotlib.pyplot as plt
 import io
 import os
-import psycopg2
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import matplotlib
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
-import pandas as pd
+from flask_sqlalchemy import SQLAlchemy
 
 
 matplotlib.use('agg')
 
-USER_ID = 1
 selected_items = []
 TARGET_VALUE = 30
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 bcrypt = Bcrypt(app)
-
-
-# DB connection in the Azure Database
-
-db_params = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME'),
-    'port':'5432'
-}
-'''
-# DB connection locally for testing
-
-db_params = {
-    'host': "vegetable-tracker-db.postgres.database.azure.com",
-    'user': "rhoAdmin",
-    'password': "ADD",
-    'database': "nutritions",
-    'port':'5432'
-}
-'''
-
-# Connect to database
-def create_connection(db_params):
-    try:
-        # Connect to PostgreSQL database
-        connection = psycopg2.connect(
-            dbname=db_params['database'],
-            user=db_params['user'],
-            password=db_params['password'],
-            host=db_params['host'],
-            port=db_params['port']
-        )
-        return connection
-    except Exception as error:
-        print(error)
-        return None
+db = SQLAlchemy(app)
     
 # Flask-Login Manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "/"
 
-class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
-    
-    def get_id(self):
-        return self.id
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
 
-connection = create_connection(db_params)
-cursor = connection.cursor()
+    eaten = db.relationship('Eaten', backref='user', lazy=True)
+
+class Vegetable(db.Model):
+    __tablename__ = 'vegetables'
+    id = db.Column(db.Integer, primary_key=True)
+    foodname = db.Column(db.String(100), nullable=False, unique=True)
+    calsium = db.Column(db.Integer, default=0)
+    carotenoids = db.Column(db.Integer, default=0)
+    iron = db.Column(db.Integer, default=0)
+    fiber = db.Column(db.Integer, default=0)
+    folate = db.Column(db.Integer, default=0)
+    iodine = db.Column(db.Integer, default=0)
+    kalium = db.Column(db.Integer, default=0)
+    magnesium = db.Column(db.Integer, default=0)
+    niacin = db.Column(db.Integer, default=0)
+    phosphorus = db.Column(db.Integer, default=0)
+    riboflavin = db.Column(db.Integer, default=0)
+    selenium = db.Column(db.Integer, default=0)
+    thiamin = db.Column(db.Integer, default=0)
+    vitamina = db.Column(db.Integer, default=0)
+    vitaminb12 = db.Column(db.Integer, default=0)
+    vitaminc = db.Column(db.Integer, default=0)
+    vitamind = db.Column(db.Integer, default=0)
+    vitamine = db.Column(db.Integer, default=0)
+    vitamink = db.Column(db.Integer, default=0)
+    vitaminb6 = db.Column(db.Integer, default=0)
+    zinc = db.Column(db.Integer, default=0)
+
+    eaten = db.relationship('Eaten', backref='vegetable', lazy=True)
+
+class Eaten(db.Model):
+    __tablename__ = 'eaten'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    veg_id = db.Column(db.Integer, db.ForeignKey('vegetables.id'), nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+
+# Flask-Login user loader
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Get all vegetables available from the database
-cursor.execute("SELECT foodname FROM vegetables;")
-rows = cursor.fetchall()
-vegetable_list = [row[0] for row in rows]
+def get_vegetable_list():
+    return [veg.foodname for veg in Vegetable.query.all()]
+
+def get_eaten_history_data(id):
+    # Haetaan veg_id:t eaten-taulusta käyttäjälle
+    veg_ids = Eaten.query.filter_by(user_id=id).distinct(Eaten.veg_id).all()
 
 
-query = """
-SELECT foodname, calsium, carotenoids, iron, fiber, 
-folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
-vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
-FROM vegetables;
-"""
-
-veg_df = pd.read_sql(query, connection)
+    for item in veg_ids:
+        vegetable = Vegetable.query.get(item.veg_id)
+        if vegetable != None:
+            selected_items.append(vegetable.foodname)
 
 def suggest_vitamins(veg_name):
     vit_dict = {
-    'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
-    'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
-    'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
-    'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
-    'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0 }
+        'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
+        'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
+        'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
+        'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
+        'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0 }
 
-    veg_name.upper()
+    vegetable = Vegetable.query.filter_by(foodname=veg_name.upper()).first()
 
-    single_df = veg_df[veg_df['foodname'] == veg_name]
-
-    for key, value in vit_dict.items():
-        if single_df[key].any():
-            vit_dict[key] = 1
+    if vegetable:
+        for key in vit_dict.keys():
+            if getattr(vegetable, key) > 0:
+                vit_dict[key] = 1
 
     return vit_dict
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    cur = connection.cursor()
-    cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
-    user_data = cur.fetchone()
-
-    if user_data:
-        return User(user_data[0], user_data[1])
-    return None
-
-
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -128,12 +113,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        cur = connection.cursor()
-        cur.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
-        user_data = cur.fetchone()
+        user = User.query.filter_by(username=username).first()
 
-        if user_data and bcrypt.check_password_hash(user_data[2], password):
-            user = User(user_data[0], user_data[1])
+        if user and bcrypt.check_password_hash(user.password, password):
+            #user = User(username=username, password=password)
             login_user(user)
             print(f'LOGGED IN: Current username: {current_user.username}')
             print(f'LOGGED IN: Current user id: {current_user.id}')
@@ -150,18 +133,14 @@ def register():
             username = request.form['username']
             password = request.form['password']
 
-            cur = connection.cursor()
-            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-            existing_user = cur.fetchone()
-
-            if existing_user:
+            if User.query.filter_by(username=username).first():
                 flash("Username already exists!", "danger")
-                return redirect(url_for('/'))
-
-            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
+                return redirect(url_for('login'))
             
-            connection.commit()
+            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+            new_user = User(username=username, password=hashed_password)
+            db.session.add(new_user)
+            db.session.commit()
 
             print(f'REGISTERED')
             flash("Account created successfully!", "success")
@@ -178,14 +157,6 @@ def logout():
     logout_user()
     flash("You have logged out.", "info")
     return redirect(url_for('login'))
-
-# Get eaten history data from database for current user
-def get_eaten_history_data(id):
-    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {id};")
-    veg_ids = cursor.fetchall()
-    
-    for item in veg_ids:
-        selected_items.append(vegetable_list[item[0]-1])
 
     
 @app.route('/home')
@@ -204,21 +175,15 @@ def index():
 @login_required
 def suggest():
     query = request.args.get('q', '')
-    suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
+    suggestions = [veg for veg in get_vegetable_list() if query.lower() in veg.lower()]
 
-    if suggestions:
-        vitamins_info = {}
-        suggestion_vitamin = []
-        for veg in suggestions:
-            vitamins_info[veg] = {key: value for key, value in suggest_vitamins(veg).items() if value == 1}
-        
-        for vegetable, vitamin in vitamins_info.items():
-            vitamins_list = list(vitamin.keys())
-
-            suggestion_vitamin.append({"vegetable": vegetable, "vitamins": vitamins_list})
-
-
-    return jsonify(suggestion_vitamin)
+    vitamins_info = []
+    for veg in suggestions:
+        vitamins_info.append({
+            "vegetable": veg,
+            "vitamins": [key for key, value in suggest_vitamins(veg).items() if value == 1]
+        })
+    return jsonify(vitamins_info)
 
 # This route is for removing an item from the list
 @app.route('/remove_item', methods=['DELETE'])
@@ -261,14 +226,18 @@ def save_items():
             selected_items.remove(item)
         selected_items.append(item)
 
+        # Create and insert record into Eaten table using SQLAlchemy ORM
+        vegetable_list = get_vegetable_list()
+        vegetable_id = vegetable_list.index(item) + 1  # Assuming veg_id corresponds to index
         current_timestamp = current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
+        
+        new_eaten = Eaten(user_id=USER_ID, veg_id=vegetable_id, date=current_timestamp)
+        db.session.add(new_eaten)
+        db.session.commit()
 
-        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",
-                       (USER_ID,(vegetable_list.index(item) + 1),current_timestamp))
-
-        connection.commit()
     print(f'ITEMS ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
+
 
 # Get eaten list to frontend
 @app.route('/get_items', methods=['GET'])
@@ -303,44 +272,28 @@ def get_bar_chart():
 @app.route('/get_vitamins')
 def get_vitamins():
     vitamin_dictionary = {
-        'calsium':0,
-        'carotenoids':0,
-        'iron':0,
-        'fiber':0,
-        'folate':0,
-        'iodine':0,
-        'kalium':0,
-        'magnesium':0,
-        'niacin':0,
-        'phosphorus':0,
-        'riboflavin':0,
-        'selenium':0,
-        'thiamin':0,
-        'vitamina':0,
-        'vitaminb12':0,
-        'vitaminc':0,
-        'vitamind':0,
-        'vitamink':0,
-        'vitaminb6':0,
-        'zinc':0
+        'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0, 'folate': 0,
+        'iodine': 0, 'kalium': 0, 'magnesium': 0, 'niacin': 0, 'phosphorus': 0,
+        'riboflavin': 0, 'selenium': 0, 'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0,
+        'vitaminc': 0, 'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0
     }
-    query = """
-    SELECT foodname, calsium, carotenoids, iron, fiber, 
-    folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
-    vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
-    FROM vegetables
-    WHERE foodname = ANY(%s)
-    """
-    df = pd.read_sql(query, connection, params=(selected_items,))
 
-    for key, value in vitamin_dictionary.items():
-        if df[key].any():
-            vitamin_dictionary[key] = 1
+    # Query to get the selected vegetable records using SQLAlchemy ORM
+    vegetables = Vegetable.query.filter(Vegetable.foodname.in_(selected_items)).all()
 
-    return vitamin_dictionary
+    # Update the vitamin dictionary based on the fetched data
+    for vegetable in vegetables:
+        for key in vitamin_dictionary.keys():
+            if getattr(vegetable, key) > 0:
+                vitamin_dictionary[key] = 1
+
+    return jsonify(vitamin_dictionary)
+
+
 
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+
     app.run(debug=True)
 
-    cursor.close()
-    connection.close()
