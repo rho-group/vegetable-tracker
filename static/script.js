@@ -113,9 +113,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 suggestionsList.innerHTML = "";
                 data.forEach(item => {
                     let li = document.createElement("li");
-                    const displayString = `${item.vegetable}: ${item.vitamins.join(', ')}`;
-                    li.textContent = toTitleCase(displayString);
-                    li.setAttribute('class','dropdown-item')
+                    li.classList.add('vitamin-list-item')
+
+                    const veg_str = toTitleCase(item.vegetable)
+                    const vit_str = toTitleCase(item.vitamins.join(', '))
+
+                    li.innerHTML = `<b>${veg_str}</b> <span class="vitamin-text">${vit_str}</span>`
+
+                    //const displayString = `${item.vegetable}: ${item.vitamins.join(', ')}`;
+                    //li.textContent = toTitleCase(displayString);
+                    li.classList.add('dropdown-item')
                     li.onclick = function () {
                         addToList(item.vegetable);
                         inputField.value = "";

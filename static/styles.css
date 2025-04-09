@@ -1,4 +1,4 @@
-h1, h2, h3, div, li, ul {
+h1, h2, h3, h4, div, li, ul {
   font-family: 'Lora';
 }
 
@@ -32,4 +32,27 @@ h1, h2, h3, div, li, ul {
 
 .green {
   background-color: rgb(88, 197, 88) !important;
+}
+
+#selected-list li {
+  cursor: pointer;
+
+}
+#suggestions {
+  cursor: pointer;
+}
+#already-eaten-list li {
+  list-style-type: disc;
+  list-style-position: outside; 
+  margin-right: 25px;
+  margin-bottom: 10px;
+}
+.vitamin-list-item {
+  text-wrap: wrap;
+  word-wrap: break-word;
+  overflow-x: hidden;
+}
+.vitamin-text {
+  font-size: smaller;
+  color: gray;
 }
