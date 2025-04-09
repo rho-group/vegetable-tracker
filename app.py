@@ -10,18 +10,14 @@ from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 from flask import session
-'''
+
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 name = os.getenv('DB_NAME')
-'''
-user = 'rhoAdmin'
-password = 'ViliVihannes123'
-host = 'vegetable-tracker-db.postgres.database.azure.com'
-port = '5432'
-name = 'nutritions'
+
+
 
 matplotlib.use('agg')
 
