@@ -1,142 +1,121 @@
-from flask import Flask, render_template, request, jsonify, Response,url_for, flash, redirect
-import matplotlib.pyplot as plt
-import io
-import os
-import psycopg2
-from datetime import datetime
-from zoneinfo import ZoneInfo
-import matplotlib
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, Response
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+import io
+import os
+#from dotenv import load_dotenv
+#load_dotenv()
 
+DB_USER="rhoAdmin"
+DB_PASSWORD="ViliVihannes123"
+DB_HOST="vegetable-tracker-db.postgres.database.azure.com"
+DB_NAME="nutritions"
+SECRET_KEY="salainen"
 
 matplotlib.use('agg')
 
-USER_ID = 1
 selected_items = []
-TARGET_VALUE = 30
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
+app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key')
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
+    f"{os.getenv('DB_HOST')}/{os.getenv('DB_NAME')}"
+)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
-
-
-# DB connection in the Azure Database
-
-db_params = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME'),
-    'port':'5432'
-}
-'''
-# DB connection locally for testing
-
-db_params = {
-    'host': "vegetable-tracker-db.postgres.database.azure.com",
-    'user': "rhoAdmin",
-    'password': "ADD",
-    'database': "nutritions",
-    'port':'5432'
-}
-'''
-
-# Connect to database
-def create_connection(db_params):
-    try:
-        # Connect to PostgreSQL database
-        connection = psycopg2.connect(
-            dbname=db_params['database'],
-            user=db_params['user'],
-            password=db_params['password'],
-            host=db_params['host'],
-            port=db_params['port']
-        )
-        return connection
-    except Exception as error:
-        print(error)
-        return None
-    
-# Flask-Login Manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "/"
 
-class User(UserMixin):
-    def __init__(self, id, username):
-        self.id = id
-        self.username = username
-    
-    def get_id(self):
-        return self.id
+# ----------- DATABASE MODELS -----------
 
-connection = create_connection(db_params)
-cursor = connection.cursor()
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
 
-# Get all vegetables available from the database
-cursor.execute("SELECT foodname FROM vegetables;")
-rows = cursor.fetchall()
-vegetable_list = [row[0] for row in rows]
+class Vegetable(db.Model):
+    __tablename__ = 'vegetables'
+    id = db.Column(db.Integer, primary_key=True)
+    foodname = db.Column(db.String(128), nullable=False)
+    calsium = db.Column(db.Float)
+    carotenoids = db.Column(db.Float)
+    iron = db.Column(db.Float)
+    fiber = db.Column(db.Float)
+    folate = db.Column(db.Float)
+    iodine = db.Column(db.Float)
+    kalium = db.Column(db.Float)
+    magnesium = db.Column(db.Float)
+    niacin = db.Column(db.Float)
+    phosphorus = db.Column(db.Float)
+    riboflavin = db.Column(db.Float)
+    selenium = db.Column(db.Float)
+    thiamin = db.Column(db.Float)
+    vitamina = db.Column(db.Float)
+    vitaminb12 = db.Column(db.Float)
+    vitaminc = db.Column(db.Float)
+    vitamind = db.Column(db.Float)
+    vitamine = db.Column(db.Float)
+    vitamink = db.Column(db.Float)
+    vitaminb6 = db.Column(db.Float)
+    zinc = db.Column(db.Float)
 
+class Eaten(db.Model):
+    __tablename__ = 'eaten'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    veg_id = db.Column(db.Integer, db.ForeignKey('vegetables.id'))
+    date = db.Column(db.DateTime)
 
-query = """
-SELECT foodname, calsium, carotenoids, iron, fiber, 
-folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
-vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
-FROM vegetables;
-"""
-
-veg_df = pd.read_sql(query, connection)
-
-def suggest_vitamins(veg_name):
-    vit_dict = {
-    'calsium': 0, 'carotenoids': 0, 'iron': 0, 'fiber': 0,
-    'folate': 0, 'iodine': 0, 'kalium': 0, 'magnesium': 0,
-    'niacin': 0, 'phosphorus': 0, 'riboflavin': 0, 'selenium': 0,
-    'thiamin': 0, 'vitamina': 0, 'vitaminb12': 0, 'vitaminc': 0,
-    'vitamind': 0, 'vitamink': 0, 'vitaminb6': 0, 'zinc': 0 }
-
-    veg_name.upper()
-
-    single_df = veg_df[veg_df['foodname'] == veg_name]
-
-    for key, value in vit_dict.items():
-        if single_df[key].any():
-            vit_dict[key] = 1
-
-    return vit_dict
-
+# ----------- LOGIN MANAGER -----------
 
 @login_manager.user_loader
 def load_user(user_id):
-    cur = connection.cursor()
-    cur.execute("SELECT id, username FROM users WHERE id = %s", (user_id,))
-    user_data = cur.fetchone()
+    return User.query.get(int(user_id))
 
-    if user_data:
-        return User(user_data[0], user_data[1])
-    return None
+# ----------- HELPERS -----------
 
+def convert_to_utc_now(user_timezone: str) -> datetime:
+    local_tz = ZoneInfo(user_timezone)
+    local_now = datetime.now(local_tz)
+    return local_now.astimezone(ZoneInfo("UTC"))
 
+def suggest_vitamins(veg_name):
+    vitamin_keys = [
+        'calsium', 'carotenoids', 'iron', 'fiber', 'folate', 'iodine', 'kalium',
+        'magnesium', 'niacin', 'phosphorus', 'riboflavin', 'selenium', 'thiamin',
+        'vitamina', 'vitaminb12', 'vitaminc', 'vitamind', 'vitamine', 'vitamink',
+        'vitaminb6', 'zinc'
+    ]
+    result = dict.fromkeys(vitamin_keys, 0)
+    veg = Vegetable.query.filter_by(foodname=veg_name).first()
+    if veg:
+        for key in vitamin_keys:
+            if getattr(veg, key):
+                result[key] = 1
+    return result
 
+# ----------- ROUTES -----------
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        user = User.query.filter_by(username=username).first()
 
-        cur = connection.cursor()
-        cur.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
-        user_data = cur.fetchone()
-
-        if user_data and bcrypt.check_password_hash(user_data[2], password):
-            user = User(user_data[0], user_data[1])
+        if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
-            print(f'LOGGED IN: Current username: {current_user.username}')
-            print(f'LOGGED IN: Current user id: {current_user.id}')
             flash("Login successful!", "success")
             return redirect(url_for('index'))
         else:
@@ -147,47 +126,29 @@ def login():
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
-            username = request.form['username']
-            password = request.form['password']
-
-            cur = connection.cursor()
-            cur.execute("SELECT id FROM users WHERE username = %s", (username,))
-            existing_user = cur.fetchone()
-
-            if existing_user:
-                flash("Username already exists!", "danger")
-                return redirect(url_for('/'))
-
-            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s) RETURNING id", (username, hashed_password))
-            
-            connection.commit()
-
-            print(f'REGISTERED')
-            flash("Account created successfully!", "success")
-
+        username = request.form['username']
+        password = request.form['password']
+        if User.query.filter_by(username=username).first():
+            flash("Username already exists!", "danger")
             return redirect(url_for('login'))
 
-    return render_template('register.html')
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        new_user = User(username=username, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
 
+        flash("Account created!", "success")
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
 
 @app.route('/logout')
 @login_required
 def logout():
-    selected_items.clear()
     logout_user()
     flash("You have logged out.", "info")
     return redirect(url_for('login'))
 
-# Get eaten history data from database for current user
-def get_eaten_history_data(id):
-    cursor.execute(f"SELECT distinct veg_id FROM eaten WHERE user_id = {id};")
-    veg_ids = cursor.fetchall()
-    
-    for item in veg_ids:
-        selected_items.append(vegetable_list[item[0]-1])
-
-    
 @app.route('/home')
 @login_required
 def index():
@@ -196,78 +157,76 @@ def index():
     USER_ID = current_user.id
     get_eaten_history_data(USER_ID)
 
-    return render_template('index.html')
+    return render_template('index.html', items=selected_items)
 
 
-# This route returns suggestions based on user input
 @app.route('/suggest')
 @login_required
 def suggest():
-    query = request.args.get('q', '')
-    suggestions = [veg for veg in vegetable_list if query.lower() in veg.lower()]
+    query = request.args.get('q', '').lower()
+    matches = Vegetable.query.filter(Vegetable.foodname.ilike(f"%{query}%")).all()
+    results = []
 
-    if suggestions:
-        vitamins_info = {}
-        suggestion_vitamin = []
-        for veg in suggestions:
-            vitamins_info[veg] = {key: value for key, value in suggest_vitamins(veg).items() if value == 1}
-        
-        for vegetable, vitamin in vitamins_info.items():
-            vitamins_list = list(vitamin.keys())
+    for veg in matches:
+        vitas = suggest_vitamins(veg.foodname)
+        vitas = [k for k, v in vitas.items() if v == 1]
+        results.append({'vegetable': veg.foodname, 'vitamins': vitas})
 
-            suggestion_vitamin.append({"vegetable": vegetable, "vitamins": vitamins_list})
+    return jsonify(results)
 
-
-    return jsonify(suggestion_vitamin)
-
-# This route is for removing an item from the list
-@app.route('/remove_item', methods=['DELETE'])
-@login_required
-def remove_item():
-    item = request.json.get('item')
-    
-    if item in selected_items:
-        selected_items.remove(item)  # Remove from the server-side list
-    
-    print(f'ITEM DELETED, selected list: {selected_items}')
-    return jsonify({'success': True, 'selected_items': selected_items})
-
-
-# Convert local datetime to UTC using zoneinfo
-def convert_to_utc_now(user_timezone: str) -> datetime:
-    try:
-        local_tz = ZoneInfo(user_timezone)
-        local_now = datetime.now(local_tz)
-        utc_now = local_now.astimezone()
-        return utc_now
-    
-    except Exception as e:
-        raise ValueError(f"Timezone conversion failed: {e}")
-
-# Save selected vegetables to backend
 @app.route('/save_items', methods=['POST'])
 @login_required
 def save_items():
-    items = request.json.get('items')
-    user_timezone = request.json.get('timezone')
+    data = request.get_json()
+    items = data.get('items', [])
+    tz = data.get('timezone', 'UTC')
+    timestamp = convert_to_utc_now(tz)
 
-    if not user_timezone:
-        return jsonify({'error': 'Timezone not provided'}), 400
+    for name in items:
+        veg = Vegetable.query.filter_by(foodname=name).first()
+        if veg:
+            db.session.add(Eaten(user_id=current_user.id, veg_id=veg.id, date=timestamp))
+    db.session.commit()
+    return jsonify({'success': True})
 
-    current_timestamp = convert_to_utc_now(user_timezone)
+@app.route('/get_bar_chart')
+def get_bar_chart():
+    count = Eaten.query.filter_by(user_id=current_user.id).count()
+    fig, ax = plt.subplots()
+    ax.bar('Vegetables', count, color='green')
+    ax.axhline(30, color='red', linestyle='--')
+    ax.text(0, count + 1, f"{count/30*100:.0f}% of your weekly goal!")
 
-    for item in items:
-        if item in selected_items:
-            selected_items.remove(item)
-        selected_items.append(item)
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    plt.close(fig)
+    return Response(buf.getvalue(), mimetype='image/png')
 
-        current_timestamp = current_timestamp.replace(tzinfo=ZoneInfo("UTC"))
+@app.route('/get_vitamins')
+@login_required
+def get_vitamins():
+    eaten_veg_ids = db.session.query(Eaten.veg_id).filter_by(user_id=current_user.id).distinct()
+    vitamins = dict.fromkeys([
+        'calsium','carotenoids','iron','fiber','folate','iodine','kalium','magnesium','niacin','phosphorus',
+        'riboflavin','selenium','thiamin','vitamina','vitaminb12','vitaminc','vitamind','vitamine',
+        'vitamink','vitaminb6','zinc'
+    ], 0)
 
-        cursor.execute("INSERT INTO eaten (user_id, veg_id, date) VALUES (%s, %s, %s);",
-                       (USER_ID,(vegetable_list.index(item) + 1),current_timestamp))
+    vegs = Vegetable.query.filter(Vegetable.id.in_([vid for (vid,) in eaten_veg_ids])).all()
 
-        connection.commit()
-    print(f'ITEMS ADDED, selected list: {selected_items}')
+    for veg in vegs:
+        for k in vitamins:
+            if getattr(veg, k):
+                vitamins[k] = 1
+    return jsonify(vitamins)
+
+@app.route('/add_item', methods=['POST'])
+def add_item():
+    item = request.json.get('item')
+    if item and item not in selected_items:
+        selected_items.append(item)  # Add to the server-side list
+    print(f'ITEM ADDED, selected list: {selected_items}')
     return jsonify({'success': True, 'selected_items': selected_items})
 
 # Get eaten list to frontend
@@ -275,72 +234,22 @@ def save_items():
 def get_items():
     return jsonify(selected_items)
 
-# Generate Stacked Bar Chart
-@app.route('/get_bar_chart')
-def get_bar_chart():
-    current_value = len(selected_items)  # Number of selected items
+@app.route('/get_eaten_history/<int:id>', methods=['GET'])
+def get_eaten_history_data(id):
+    # Haetaan veg_id:t eaten-taulusta käyttäjälle
+    veg_ids = Eaten.query.filter_by(user_id=id).distinct(Eaten.veg_id).all()
 
-    fig, ax = plt.subplots(figsize=(5, 4))
+    selected_items = []
 
-    #ax.set_title(f"{current_value/30*100:.0f} % of your weekly goal!")
-    ax.text(-0.2, current_value + 0.2, f"{current_value/30*100:.0f} % of your weekly goal!")
+    for item in veg_ids:
+        vegetable = Vegetable.query.get(item.veg_id)  # Haetaan vihannes tietokannasta veg_id:n perusteella
+        if vegetable:
+            selected_items.append({'id': vegetable.id, 'name': vegetable.foodname})
 
-    # Create a stacked bar: First part is the actual count, second is the remaining space
-    ax.bar(" ",current_value, color="lightgreen")
-    ax.axhline(y=TARGET_VALUE, color="green", linestyle="--", linewidth=1)
+    return jsonify(selected_items)
 
-    ax.set_ylim(0, TARGET_VALUE + (TARGET_VALUE//3))
 
-    # Save plot to a bytes buffer
-    img = io.BytesIO()
-    plt.savefig(img, format='png', bbox_inches='tight')
-    plt.close(fig)
-    img.seek(0)
+# ------------
 
-    return Response(img.getvalue(), mimetype='image/png')
-
-# Get information about vitamins of eaten vegetables
-@app.route('/get_vitamins')
-def get_vitamins():
-    vitamin_dictionary = {
-        'calsium':0,
-        'carotenoids':0,
-        'iron':0,
-        'fiber':0,
-        'folate':0,
-        'iodine':0,
-        'kalium':0,
-        'magnesium':0,
-        'niacin':0,
-        'phosphorus':0,
-        'riboflavin':0,
-        'selenium':0,
-        'thiamin':0,
-        'vitamina':0,
-        'vitaminb12':0,
-        'vitaminc':0,
-        'vitamind':0,
-        'vitamink':0,
-        'vitaminb6':0,
-        'zinc':0
-    }
-    query = """
-    SELECT foodname, calsium, carotenoids, iron, fiber, 
-    folate, iodine, kalium, magnesium, niacin, phosphorus, riboflavin, selenium, thiamin, vitamina, 
-    vitaminb12, vitaminc, vitamind, vitamine, vitamink, vitaminb6, zinc
-    FROM vegetables
-    WHERE foodname = ANY(%s)
-    """
-    df = pd.read_sql(query, connection, params=(selected_items,))
-
-    for key, value in vitamin_dictionary.items():
-        if df[key].any():
-            vitamin_dictionary[key] = 1
-
-    return vitamin_dictionary
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
-
-    cursor.close()
-    connection.close()
