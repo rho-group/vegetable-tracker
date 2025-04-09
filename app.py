@@ -8,12 +8,14 @@ import matplotlib
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import Session
 
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 name = os.getenv('DB_NAME')
+
 
 matplotlib.use('agg')
 
@@ -75,10 +77,9 @@ class Eaten(db.Model):
     veg_id = db.Column(db.Integer, db.ForeignKey('vegetables.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
 
-# Flask-Login user loader
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 # Get all vegetables available from the database
 def get_vegetable_list():
@@ -90,7 +91,8 @@ def get_eaten_history_data(id):
 
 
     for item in veg_ids:
-        vegetable = Vegetable.query.get(item.veg_id)
+        #vegetable = Vegetable.query.get(item.veg_id)
+        vegetable = db.session.get(Vegetable, item.veg_id)
         if vegetable != None:
             selected_items.append(vegetable.foodname)
 
