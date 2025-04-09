@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS eaten;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS vegetables;
+DROP TABLE IF EXISTS inseason;
 
 CREATE TABLE IF NOT EXISTS users (
 	id SERIAL PRIMARY KEY,
@@ -54,4 +55,24 @@ CREATE TABLE IF NOT EXISTS eaten (
 	CONSTRAINT fk_veg
 		FOREIGN KEY(veg_id)
 			REFERENCES vegetables(id)
+);
+
+CREATE TABLE IF NOT EXISTS inseason (
+	id SERIAL PRIMARY KEY,
+	veg_id INTEGER,
+	CONSTRAINT fk_veg
+		FOREIGN KEY(veg_id)
+			REFERENCES vegetables(id),
+	jan TEXT,
+	feb TEXT,
+	mar TEXT,
+	apr TEXT,
+	may TEXT,
+	jun TEXT,
+	jul TEXT,
+	aug TEXT,
+	sep TEXT,
+	oct TEXT,
+	nov TEXT,
+	dec TEXT
 );
