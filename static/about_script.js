@@ -19,11 +19,18 @@ document.addEventListener("DOMContentLoaded", () => {
             box.style.cursor = "pointer";
 
             box.addEventListener('click', () => {
+                // remove selected from other
+                container.querySelectorAll('.box2').forEach(b => b.classList.remove('selected'));
+            
+                // add 'selected' clicked box
+                box.classList.add('selected');
+            
+                // Fetch 
                 fetch(`/get_vegetables_with_vitamin?vitamin=${vitamin}`)
                     .then(response => response.json())
                     .then(data => {
                         infoBox.innerHTML = `
-                            <strong>${vitamin_names[vitamin]}</strong> from these:
+                            <strong>${vitamin_names[vitamin].charAt(0).toUpperCase() + vitamin_names[vitamin].slice(1)}</strong> from these:
                             <ul>${data.map(item => `<li>${item}</li>`).join('')}</ul>
                         `;
                     });
