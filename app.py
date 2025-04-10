@@ -18,8 +18,6 @@ host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 name = os.getenv('DB_NAME')
 
-
-
 matplotlib.use('agg')
 
 #selected_items = []
@@ -79,6 +77,23 @@ class Eaten(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     veg_id = db.Column(db.Integer, db.ForeignKey('vegetables.id'), nullable=False)
     date = db.Column(db.DateTime, nullable=False)
+
+class Season(db.Model):
+    __tablename__ = 'inseason'
+    id = db.Column(db.Integer, primary_key=True)
+    veg_id = db.Column(db.Integer, db.ForeignKey('vegetables.id'), nullable=False)
+    jan = db.Column(db.Integer, default=0)
+    feb = db.Column(db.Integer, default=0)
+    mar = db.Column(db.Integer, default=0)
+    apr = db.Column(db.Integer, default=0)
+    may = db.Column(db.Integer, default=0)
+    jun = db.Column(db.Integer, default=0)
+    jul = db.Column(db.Integer, default=0)
+    aug = db.Column(db.Integer, default=0)
+    sep = db.Column(db.Integer, default=0)
+    oct = db.Column(db.Integer, default=0)
+    nov = db.Column(db.Integer, default=0)
+    dec = db.Column(db.Integer, default=0)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -320,6 +335,18 @@ def get_vegetables_with_vitamin():
 
     return jsonify(names)
 
+@app.route('/in_season')
+def get_in_season_data():
+    current_month = datetime.now().strftime("%b").lower()
+    column = getattr(Season, current_month)
+    in_season = (db.session.query(Vegetable.id, Vegetable.foodname)
+    .join(Season, Vegetable.id == Season.veg_id)
+    .filter(column == 1)
+    .all())
+    
+    return jsonify({
+        "in_season": [{"name": veg.foodname.capitalize()} for veg in in_season]
+    })
 
 
 if __name__ == '__main__':

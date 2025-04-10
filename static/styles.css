@@ -36,22 +36,25 @@ h1, h2, h3, h4, div, li, ul {
 
 #selected-list li {
   cursor: pointer;
-
 }
+
 #suggestions {
   cursor: pointer;
 }
+
 #already-eaten-list li {
   list-style-type: disc;
   list-style-position: outside; 
   margin-right: 25px;
   margin-bottom: 10px;
 }
+
 .vitamin-list-item {
   text-wrap: wrap;
   word-wrap: break-word;
   overflow-x: hidden;
 }
+
 .vitamin-text {
   font-size: smaller;
   color: gray;
@@ -65,14 +68,41 @@ h1, h2, h3, h4, div, li, ul {
   cursor: pointer;
   border-radius: 5px;
 }
+
 .box2:hover {
-  background-color: rgb(88, 197, 88);
+  background-color: rgb(88, 197, 88); 
 }
+
 .box2.selected {
   background-color: rgb(88, 197, 88); 
   border-color: rgb(88, 197, 88);
   color: white;
 }
+
+#veggie-list {
+  display: none;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+#load-btn {
+  padding: 8px 12px;
+  background-color: #b1f0b4;
+  color: black;
+  border: none;
+  cursor: pointer;
+}
+
+#load-btn:hover {
+  background-color: rgb(88, 197, 88);
+}
+
+#load-btn.selected {
+  background-color: rgb(88, 197, 88);
+}
+
 body {
   background-color: #f8f3eb;
   background-image: url('https://www.transparenttextures.com/patterns/45-degree-fabric-light.png');
