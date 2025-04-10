@@ -8,33 +8,36 @@ import matplotlib
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import Session
 from flask import session
+matplotlib.use('agg')
 
+TARGET_VALUE = 30
 
+app = Flask(__name__)
+
+# ----------- DATABASE CONNECTION -----------
 user = os.getenv('DB_USER')
 password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 name = os.getenv('DB_NAME')
 
-matplotlib.use('agg')
-
-#selected_items = []
-TARGET_VALUE = 30
-
-app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{user}:{password}@{host}:{port}/{name}?sslmode=require"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 bcrypt = Bcrypt(app)
 db = SQLAlchemy(app)
     
-# Flask-Login Manager
+# --------------- LOGIN MANAGER ---------------
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "/"
 
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+# ---------------- DATABASE MODELS ---------------
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -96,9 +99,8 @@ class Season(db.Model):
     nov = db.Column(db.Integer, default=0)
     dec = db.Column(db.Integer, default=0)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))
+
+# --------------- HELPER FUNCTIONS ---------------
 
 # Get all vegetables available from the database
 def get_vegetable_list():
@@ -132,7 +134,18 @@ def suggest_vitamins(veg_name):
 
     return vit_dict
 
+# Convert local datetime to UTC using zoneinfo
+def convert_to_utc_now(user_timezone: str) -> datetime:
+    try:
+        local_tz = ZoneInfo(user_timezone)
+        local_now = datetime.now(local_tz)
+        utc_now = local_now.astimezone()
+        return utc_now
+    
+    except Exception as e:
+        raise ValueError(f"Timezone conversion failed: {e}")
 
+# ----------------- ROUTES -----------------
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -142,7 +155,6 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and bcrypt.check_password_hash(user.password, password):
-            #user = User(username=username, password=password)
             login_user(user)
             session['selected_items'] = []
             print(f'LOGGED IN: Current username: {current_user.username}')
@@ -176,7 +188,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -185,14 +196,12 @@ def logout():
     flash("You have logged out.", "info")
     return redirect(url_for('login'))
 
-    
 @app.route('/home')
 @login_required
 def index():
     get_eaten_history_data(current_user.id)
 
     return render_template('index.html')
-
 
 # This route returns suggestions based on user input
 @app.route('/suggest')
@@ -209,7 +218,7 @@ def suggest():
         })
     return jsonify(vitamins_info)
 
-# This route is for removing an item from the list
+# This route is for removing an item from the intermediate list before eating
 @app.route('/remove_item', methods=['DELETE'])
 @login_required
 def remove_item():
@@ -225,19 +234,7 @@ def remove_item():
 def about():
     return render_template('about.html')
 
-
-# Convert local datetime to UTC using zoneinfo
-def convert_to_utc_now(user_timezone: str) -> datetime:
-    try:
-        local_tz = ZoneInfo(user_timezone)
-        local_now = datetime.now(local_tz)
-        utc_now = local_now.astimezone()
-        return utc_now
-    
-    except Exception as e:
-        raise ValueError(f"Timezone conversion failed: {e}")
-
-# Save selected vegetables to backend
+# Save selected vegetables to database
 @app.route('/save_items', methods=['POST'])
 @login_required
 def save_items():
@@ -271,13 +268,12 @@ def save_items():
     print(f'ITEMS ADDED, selected list: {current_selected}')
     return jsonify({'success': True, 'selected_items': current_selected})
 
-
-# Get eaten list to frontend
+# Get selected vegetables list to frontend
 @app.route('/get_items', methods=['GET'])
 def get_items():
     return jsonify(session.get('selected_items', []))
 
-# Generate Stacked Bar Chart
+# Generate stacked bar chart
 @app.route('/get_bar_chart')
 def get_bar_chart():
     current_value = len(session.get('selected_items', []))  # Number of selected items
@@ -331,7 +327,6 @@ def get_bar_chart():
 
     return Response(img.getvalue(), mimetype='image/png')
 
-
 # Get information about vitamins of eaten vegetables
 @app.route('/get_vitamins')
 def get_vitamins():
@@ -353,6 +348,7 @@ def get_vitamins():
 
     return jsonify(vitamin_dictionary)
 
+# Get vegetables based on vitamins
 @app.route('/get_vegetables_with_vitamin')
 def get_vegetables_with_vitamin():
     vitamin = request.args.get('vitamin')
@@ -360,12 +356,12 @@ def get_vegetables_with_vitamin():
     if vitamin not in Vegetable.__table__.columns:
         return jsonify([])
 
-    # Hae vihannekset joissa tämä vitamiini on arvoltaan > 0
     vegetables = Vegetable.query.filter(getattr(Vegetable, vitamin) > 0).all()
     names = [v.foodname.capitalize() for v in vegetables]
 
     return jsonify(names)
 
+# Get vegetables in season based on current month
 @app.route('/in_season')
 def get_in_season_data():
     current_month = datetime.now().strftime("%b").lower()
@@ -385,4 +381,3 @@ if __name__ == '__main__':
         db.create_all()
 
     app.run(debug=True)
-

@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    // Dictionary for creating vitamin boxes
+    // Dictionary for creating vitamin intake boxes
     let vitamin_names = {
         calsium:'Calsium',
         carotenoids:'Carotenoids',
@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", function () {
         zinc:'Zinc'
     }
 
-
     // Create the boxes for vitamins
     Object.keys(vitamin_names).forEach(vitamin => {
         const box = document.createElement('div');
@@ -49,8 +48,6 @@ document.addEventListener("DOMContentLoaded", function () {
         box.textContent = vitamin_names[vitamin];
         vitaminBoxContainer.appendChild(box);
     })
-
-    refreshVitaminBoxes()
 
     function refreshVitaminBoxes() {
         const boxes = document.querySelectorAll(".box");
@@ -66,12 +63,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     box.classList.remove("green")
                 }
           });
-
+          
         })
-
+        
     }
-
-   
 
     function refreshChart() {
         barChartImg.src = "/get_bar_chart?" + new Date().getTime(); // Prevent caching
@@ -79,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function toTitleCase(str) {
         return str.replace(/\w\S*/g, text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase());
-      }
+    }
 
     function showEatenList() {
         fetch('/get_items')
@@ -93,11 +88,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 li.textContent = toTitleCase(data[item])
                 alreadyEatenList.appendChild(li);
             }
-    })};
-
+        })};
+        
+    refreshVitaminBoxes()
     showEatenList()
 
-    // Ehdotusten haku, kun käyttäjä kirjoittaa
+    // Get suggestions when user is typing
     inputField.addEventListener("input", function () {
         let query = this.value.trim();
 
@@ -122,8 +118,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     li.innerHTML = `<b>${veg_str}</b> <span class="vitamin-text">${vit_str}</span>`
 
-                    //const displayString = `${item.vegetable}: ${item.vitamins.join(', ')}`;
-                    //li.textContent = toTitleCase(displayString);
                     li.classList.add('dropdown-item')
                     li.onclick = function () {
                         addToList(item.vegetable);
@@ -139,13 +133,15 @@ document.addEventListener("DOMContentLoaded", function () {
         
     });
 
-    // Lisää valittu ruoka väliaikaiseen listaan
+    // Add vegetable to intermediate list before eating
     function addToList(vegetable) {
-        if (!selectedItems.includes(vegetable)) { // Estää duplikaatit
+        if (!selectedItems.includes(vegetable)) { 
             selectedItems.push(vegetable);
 
             let li = document.createElement("li");
-            li.textContent = toTitleCase(vegetable);
+            
+            li.innerHTML = `<span class="list-text">${toTitleCase(vegetable)}<span class="close-button">&times;</span></span>`
+            
             li.setAttribute('class','dropdown-item')
             li.onclick = function () {
                 removeFromList(vegetable, li);
@@ -154,14 +150,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // Poista ruoka väliaikaisesta listasta
+    // Delete vegetable from intermediate list
     function removeFromList(vegetable, li) {
         console.log('Remove from list function called')
         selectedItems = selectedItems.filter(i => i !== vegetable);
         selectedList.removeChild(li);
     }
 
-    // Lähetä lista Pythonille
+    // Add vegetable to database (eat it)
     sendButton.addEventListener("click", function () {
         fetch('/save_items', {
             method: 'POST',
@@ -174,13 +170,12 @@ document.addEventListener("DOMContentLoaded", function () {
         .then(response => response.json())
         .then(data => {
             console.log("Server response:", data);
-            selectedItems = []; // Tyhjennetään lista lähetysten jälkeen
-            selectedList.innerHTML = ""; // Tyhjennetään UI
+            selectedItems = []; 
+            selectedList.innerHTML = ""; 
             alreadyEatenList.innerHTML = "";
 
             for (let item in data.selected_items) {
                 let li = document.createElement("li");
-                //li.innerHTML = data.selected_items[item];
                 li.textContent = toTitleCase(data.selected_items[item])
 
                 alreadyEatenList.appendChild(li);

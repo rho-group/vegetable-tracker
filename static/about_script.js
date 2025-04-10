@@ -9,7 +9,7 @@ button.addEventListener("click", () => {
     button.classList.remove("default");
     button.classList.add("selected");
 
-    fetch("/in_season")  // Make sure this URL is correct
+    fetch("/in_season")  
       .then(response => {
         console.log("Response received:", response);  // Log the response object
         return response.json();
