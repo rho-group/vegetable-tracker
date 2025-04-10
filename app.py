@@ -283,25 +283,25 @@ def get_bar_chart():
     current_value = len(session.get('selected_items', []))  # Number of selected items
 
     groups = {
-        'vegetables': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 1).count(),
-        'fruits': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 2).count(),
-        'berries': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 3).count(),
-        'nuts and seeds': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 4).count(),
-        'grain': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 5).count(),
-        'legume': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 6).count(),
-        'mushroom': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 7).count(),
-        'herb': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 8).count()
+        'Vegetables': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 1).count(),
+        'Fruits': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 2).count(),
+        'Berries': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 3).count(),
+        'Nuts and seeds': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 4).count(),
+        'Grain': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 5).count(),
+        'Legume': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 6).count(),
+        'Mushroom': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 7).count(),
+        'Herb': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 8).count()
     }
 
     custom_colors = [
-        '#4CAF50',  # vegetables
-        '#FF9800',  # fruits
-        '#9C27B0',  # berries
-        '#795548',  # nuts and seeds
-        '#FFC107',  # grain
-        '#3F51B5',  # legume
-        '#607D8B',  # mushroom
-        '#8BC34A',  # herb
+        '#498743',  # vegetables
+        '#aa026f',  # fruits
+        '#e30c1a',  # berries
+        '#f57a0e',  # nuts and seeds
+        '#f8ad01',  # grain
+        '#5c0029',  # legume
+        '#927643',  # mushroom
+        '#104b31',  # herb
     ]
 
     labels = list(groups.keys())
@@ -312,6 +312,7 @@ def get_bar_chart():
     fig, ax = plt.subplots(figsize=(5, 4))
     fig.patch.set_alpha(0)
     bottom = 0
+    
     for i in range(len(values)):
         ax.bar(' ', values[i], bottom=bottom, label=labels[i], color=colors[i])
         bottom += values[i]
