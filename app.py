@@ -68,6 +68,7 @@ class Vegetable(db.Model):
     vitamink = db.Column(db.Integer, default=0)
     vitaminb6 = db.Column(db.Integer, default=0)
     zinc = db.Column(db.Integer, default=0)
+    foodgroup = db.Column(db.Integer, default=0)
 
     eaten = db.relationship('Eaten', backref='vegetable', lazy=True)
 
@@ -281,25 +282,55 @@ def get_items():
 def get_bar_chart():
     current_value = len(session.get('selected_items', []))  # Number of selected items
 
+    groups = {
+        'Vegetables': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 1).count(),
+        'Fruits': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 2).count(),
+        'Berries': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 3).count(),
+        'Nuts and seeds': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 4).count(),
+        'Grain': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 5).count(),
+        'Legume': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 6).count(),
+        'Mushroom': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 7).count(),
+        'Herb': Vegetable.query.filter(Vegetable.foodname.in_(session.get('selected_items', [])),Vegetable.foodgroup == 8).count()
+    }
+
+    custom_colors = [
+        '#498743',  # vegetables
+        '#aa026f',  # fruits
+        '#e30c1a',  # berries
+        '#f57a0e',  # nuts and seeds
+        '#f8ad01',  # grain
+        '#5c0029',  # legume
+        '#927643',  # mushroom
+        '#104b31',  # herb
+    ]
+
+    labels = list(groups.keys())
+    values = list(groups.values())
+    colors = custom_colors
+
+    # Create the plot
     fig, ax = plt.subplots(figsize=(5, 4))
     fig.patch.set_alpha(0)
-    #ax.set_title(f"{current_value/30*100:.0f} % of your weekly goal!")
-    ax.text(-0.2, current_value + 0.2, f"{current_value/30*100:.0f} % of your weekly goal!")
+    bottom = 0
+    
+    for i in range(len(values)):
+        ax.bar(' ', values[i], bottom=bottom, label=labels[i], color=colors[i])
+        bottom += values[i]
 
-    # Create a stacked bar: First part is the actual count, second is the remaining space
-    ax.bar(" ",current_value, color="lightgreen")
+    ax.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
     ax.axhline(y=TARGET_VALUE, color="green", linestyle="--", linewidth=1)
+    ax.set_ylim(0, TARGET_VALUE + (TARGET_VALUE//6))
+    ax.text(-0.28, current_value + 0.2, f"{current_value/30*100:.0f} % of your weekly goal!")
+    plt.tight_layout()
 
-    ax.set_ylim(0, TARGET_VALUE + (TARGET_VALUE//3))
-
-
-    # Save plot to a bytes buffer
+    # Save plot to BytesIO buffer
     img = io.BytesIO()
     plt.savefig(img, format='png', bbox_inches='tight')
     plt.close(fig)
     img.seek(0)
 
     return Response(img.getvalue(), mimetype='image/png')
+
 
 # Get information about vitamins of eaten vegetables
 @app.route('/get_vitamins')
