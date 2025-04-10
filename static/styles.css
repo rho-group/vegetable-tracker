@@ -96,3 +96,16 @@ body, #body-background {
   background-image: url('https://www.transparenttextures.com/patterns/45-degree-fabric-light.png');
 }
 
+.dropdown-item:hover .right_cross {
+  justify-content: right;
+}
+
+.list-text {
+  display: flex;
+  justify-content: space-between;
+}
+
+.close-button {
+  font-weight: bold;
+  padding-right: 3%;
+}
