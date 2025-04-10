@@ -282,7 +282,7 @@ def get_bar_chart():
     current_value = len(session.get('selected_items', []))  # Number of selected items
 
     fig, ax = plt.subplots(figsize=(5, 4))
-
+    fig.patch.set_alpha(0)
     #ax.set_title(f"{current_value/30*100:.0f} % of your weekly goal!")
     ax.text(-0.2, current_value + 0.2, f"{current_value/30*100:.0f} % of your weekly goal!")
 
@@ -291,6 +291,7 @@ def get_bar_chart():
     ax.axhline(y=TARGET_VALUE, color="green", linestyle="--", linewidth=1)
 
     ax.set_ylim(0, TARGET_VALUE + (TARGET_VALUE//3))
+
 
     # Save plot to a bytes buffer
     img = io.BytesIO()
