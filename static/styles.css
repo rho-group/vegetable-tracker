@@ -60,11 +60,20 @@ h1, h2, h3, h4, div, li, ul {
 .box2 {
   padding: 10px;
   margin: 5px;
-  background-color: #e1f5fe;
-  border: 1px solid #81d4fa;
+  background-color: #b1f0b4;
+  border: 1px solid #6ce672;
   cursor: pointer;
   border-radius: 5px;
 }
 .box2:hover {
-  background-color: #b3e5fc;
+  background-color: rgb(88, 197, 88);
+}
+.box2.selected {
+  background-color: rgb(88, 197, 88); 
+  border-color: rgb(88, 197, 88);
+  color: white;
+}
+body {
+  background-color: #f8f3eb;
+  background-image: url('https://www.transparenttextures.com/patterns/45-degree-fabric-light.png');
 }
