@@ -1,3 +1,56 @@
+const button = document.getElementById("load-btn");
+const textBox = document.getElementById("veggie-list");
+
+button.addEventListener("click", () => {
+  // Toggle the textBox visibility
+  if (textBox.style.display === "none" || textBox.style.display === "") {
+    textBox.style.display = "block";
+
+    button.classList.remove("default");
+    button.classList.add("selected");
+
+    fetch("/in_season")  // Make sure this URL is correct
+      .then(response => {
+        console.log("Response received:", response);  // Log the response object
+        return response.json();
+      })
+      .then(data => {
+        console.log("Parsed data:", data);  // Log the parsed data
+
+        // Check if data.in_season exists and is an array
+        if (!data.in_season || !Array.isArray(data.in_season)) {
+          console.error("Invalid data format:", data);
+          textBox.innerHTML = "<p>Error: Invalid data format or empty data</p>";
+          return;
+        }
+
+        textBox.innerHTML = "";  // Clear any previous content
+
+        if (data.in_season.length === 0) {
+          textBox.innerHTML = "<p>No vegetables in season right now</p>";
+        } else {
+          // Loop through the in_season array and display each vegetable
+          data.in_season.forEach(veg => {
+            const item = document.createElement("div");
+            item.classList.add("veggie-item");
+            item.textContent = `${veg.name}`;
+            textBox.appendChild(item);
+          });
+        }
+      })
+      .catch(error => {
+        console.error("Error fetching data:", error);
+        textBox.innerHTML = "<p>Error loading veggies</p>";
+      });
+  } else {
+    textBox.style.display = "none";
+
+    button.classList.remove("selected");
+    button.classList.add("default");
+  }
+});
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const vitamin_names = {
         calsium: "calsium", carotenoids: "carotenoids", iron: "iron", fiber: "fiber",
