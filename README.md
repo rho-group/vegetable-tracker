@@ -7,6 +7,7 @@ Application with focus on eating versatile vegetables, fruits, berries and other
 - The database is ran in Azure webservice with Azure PostgreSQL database. 
 - We used Jupiter Notebook to clean the data to usable format.
 - The backend of our application is made using Python and the frontend was made using HTML, CSS and JavaScript.
+- Check the UI from this video: [demo video of the web app](https://drive.google.com/file/d/1Ze65LqJwupnMG5RboUS2WU_8J03yH3Le/view?usp=sharing)
 ## How to run the project locally
 - To run the application locally, you need to set up PostgreSQL database. The tables can be made with `create_table_scripts_all_included.sql`
 - After this you can populate the vegetable and inseason tables with the .csv files found in our `nutrition data`-folder.
